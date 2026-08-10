@@ -1,0 +1,91 @@
+/* ============================================================
+   TempToy · gemeinsames Drucklayout
+   Liegt im Wurzelverzeichnis von lauwerk/TempToy.
+   Einbindung in jeder Unterseite (z. B. /pizza/index.html):
+
+     <link rel="stylesheet" href="../print.css" media="print">
+
+   media="print" sorgt dafür, dass die Datei nur beim Drucken
+   geladen wird und die Bildschirmansicht nicht beeinflusst.
+
+   Erwartetes Klassen-Vokabular der Seiten:
+     .wrap        äußerer Container
+     .toolbar     Knopfleiste (wird im Druck ausgeblendet)
+     .btn         Knöpfe (ausgeblendet)
+     .card .bcard Ergebniskarten
+     .verdict     Fazit-Kasten, .verdict.cool für kühle Variante
+     .matrix      Tabellen
+     .field       Beschriftung + Eingabe
+     .val         Wertanzeige innerhalb einer Beschriftung
+     .printonly   nur im Ausdruck sichtbar (Datumsstempel)
+     .no-print    im Ausdruck ausblenden
+   ============================================================ */
+
+@page{ margin:14mm }
+
+@media print{
+
+  /* --- Papier statt Bildschirm --- */
+  :root{
+    --soot:#fff; --panel:#fff; --line:#C9C2B8;
+    --chalk:#14110F; --muted:#5E564F; --ash:#3A342F;
+    --flame:#0B5FA6; --flame-dim:#0B5FA6;
+    --ember:#A8410F; --ember-dim:#A8410F;
+  }
+  html,body{ background:#fff !important; color:#14110F !important }
+  body{ padding:0; font-size:11pt; line-height:1.45 }
+  .wrap{ max-width:none }
+
+  /* --- Bedienelemente raus --- */
+  .toolbar,.btn,.no-print,#saveState{ display:none !important }
+  input[type=range]{ display:none !important }
+  button{ display:none !important }
+
+  /* --- Eingabewerte als Text lesbar machen --- */
+  .field label{ margin-bottom:0 }
+  .field .val{ float:none; margin-left:6px; font-weight:700 }
+  input[type=number],input[type=text]{
+    border:none !important; background:none !important;
+    color:#14110F !important; padding:2px; font-weight:700;
+    -webkit-appearance:none; appearance:none;
+  }
+
+  /* --- nur im Ausdruck --- */
+  .printonly{ display:block !important;
+    font-family:'JetBrains Mono',ui-monospace,monospace;
+    font-size:9pt; color:#5E564F; margin:8px 0 0 }
+
+  /* --- Struktur --- */
+  h1{ color:#14110F !important }
+  h1 .b{ color:#0B5FA6 !important }
+  h1 .o{ color:#A8410F !important }
+  h2{ color:#5E564F !important; border-color:#C9C2B8 !important }
+  .partlabel.obj{ background:#0B5FA6 !important; color:#fff !important }
+  .partlabel.sub{ background:#A8410F !important; color:#fff !important }
+  .partlabel.br { background:#3A342F !important; color:#fff !important }
+
+  /* --- Blöcke nicht über Seitenumbrüche zerreißen --- */
+  .card,.bcard,.verdict,figure,.brow,.part{
+    break-inside:avoid; page-break-inside:avoid;
+  }
+  .card,.bcard{ background:#fff !important; border:1px solid #C9C2B8 !important }
+  .big{ color:#0B5FA6 !important }
+  .verdict{ background:#F7F5F1 !important; border-left-color:#A8410F !important }
+  .verdict.cool{ border-left-color:#0B5FA6 !important }
+
+  /* --- Balken und Füllstände --- */
+  .brow .track,.tank .bar{ background:#F0EDE8 !important; border-color:#C9C2B8 !important }
+  .brow .fill{ background:#A8410F !important }
+  .tank .fill{ background:#0B5FA6 !important }
+
+  /* --- Tabellen --- */
+  .matrix td,.matrix th{ border-color:#C9C2B8 !important }
+  .matrix th{ color:#5E564F !important }
+  thead{ display:table-header-group }
+
+  /* --- Fußzeile --- */
+  footer{ color:#5E564F !important; border-color:#C9C2B8 !important }
+
+  /* --- Farbflächen wirklich drucken --- */
+  *{ -webkit-print-color-adjust:exact; print-color-adjust:exact }
+}
