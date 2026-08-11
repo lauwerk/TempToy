@@ -1,1 +1,413 @@
-test
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Morgen-Workout</title>
+<link rel="stylesheet" href="../print.css" media="print">
+<style>
+:root{
+  --bg:#f5f3ef; --card:#fff; --ink:#1f2937; --mute:#6b7280; --line:#e5e1da;
+  --a:#c2410c; --b:#1d4ed8; --c:#15803d; --ok:#059669;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+body{padding:0 0 90px;max-width:640px;margin:0 auto}
+header{padding:18px 16px 8px}
+h1{font-size:20px;margin:0 0 2px;letter-spacing:-.02em}
+.sub{color:var(--mute);font-size:13px}
+.wrap{padding:0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:10px 0;overflow:hidden}
+.dayhead{padding:14px 16px;color:#fff}
+.dayhead h2{margin:0;font-size:19px;letter-spacing:-.02em}
+.dayhead p{margin:3px 0 0;font-size:13px;opacity:.9}
+.pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;background:rgba(255,255,255,.22);padding:3px 8px;border-radius:99px;margin-bottom:6px}
+.switch{display:flex;gap:6px;padding:0 12px;margin:12px 0 4px}
+.switch button{flex:1;padding:9px 4px;border-radius:11px;border:1px solid var(--line);
+  background:#fff;font-size:13px;font-weight:600;color:var(--mute)}
+.switch button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.ex{border-top:1px solid var(--line);padding:12px 14px}
+.ex:first-child{border-top:0}
+.exhead{display:flex;align-items:flex-start;gap:10px}
+.exname{flex:1;font-weight:650;font-size:16px;letter-spacing:-.01em}
+.exmeta{font-size:13px;color:var(--mute);margin-top:2px}
+.i{flex:none;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);
+  background:#fbfaf8;font-weight:700;color:var(--mute);font-size:15px;font-style:italic}
+.i.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.sets{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.sets .lbl{font-size:12px;color:var(--mute);margin-right:2px}
+.set{width:40px;height:40px;border-radius:12px;border:1.5px solid var(--line);
+  background:#fff;font-weight:700;color:var(--mute);font-size:14px}
+.set.done{background:var(--ok);border-color:var(--ok);color:#fff}
+.note{margin-top:9px;width:100%;padding:8px 10px;border:1px solid var(--line);
+  border-radius:10px;font-size:14px;background:#fbfaf8;color:var(--ink)}
+.info{display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.info.open{display:block}
+.figs{display:flex;gap:8px;margin-bottom:12px}
+.figbox{flex:1;background:#fbfaf8;border:1px solid var(--line);border-radius:12px;padding:4px 4px 2px;text-align:center}
+.figbox span{display:block;font-size:11px;color:var(--mute);font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding-bottom:4px}
+.fig{width:100%;height:auto;display:block}
+.fig line{stroke:#1f2937;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.fig circle{fill:#1f2937}
+.fig .aux{stroke:#a8a29e}
+.fig .gnd{stroke:#cfc8bd;stroke-dasharray:3 3}
+.fig .eq{stroke:#c2410c}
+.info h4{margin:12px 0 4px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.info ul{margin:0;padding-left:18px;font-size:14.5px}
+.info li{margin:3px 0}
+.info .warn li::marker{color:#b91c1c}
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.94);
+  backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  display:flex;gap:8px;max-width:640px;margin:0 auto}
+.bar button{flex:1;padding:13px 6px;border-radius:13px;border:0;font-size:15px;font-weight:650;background:#eae6e0;color:var(--ink)}
+.bar button.pri{background:var(--ink);color:#fff}
+.bar button.t{flex:none;width:78px;font-variant-numeric:tabular-nums}
+.log{font-size:14px}
+.log .row{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid var(--line);color:var(--mute)}
+.log .row b{color:var(--ink);font-weight:600}
+.sect{padding:14px 16px}
+.sect h3{margin:0 0 8px;font-size:15px}
+.tiny{font-size:12.5px;color:var(--mute)}
+details summary{cursor:pointer;font-weight:600;font-size:15px;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸ ";color:var(--mute)}
+details[open] summary::before{content:"▾ "}
+.printonly{display:none}
+@media print{
+  .bar,.switch,.i,.note,.set,.sets{display:none!important}
+  .screen{display:none!important}
+  .printonly{display:block!important}
+  body{padding:0;max-width:none;background:#fff}
+  .card{break-inside:avoid;border-radius:0}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Morgen-Workout</h1>
+  <div class="sub" id="sub"></div>
+</header>
+
+<div class="screen">
+  <div class="switch" id="switch"></div>
+  <div class="wrap" id="app"></div>
+
+  <div class="wrap">
+    <div class="card sect">
+      <details>
+        <summary>Aufwärmen (2 Min, jeden Tag)</summary>
+        <ul class="tiny" style="padding-left:18px;margin-top:8px">
+          <li>30 Hampelmänner</li>
+          <li>10 Armkreisen vorwärts / 10 rückwärts</li>
+          <li>10 Kniebeugen ohne Gewicht</li>
+          <li>5× Katze-Kuh (Wirbelsäule mobilisieren)</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="card sect">
+      <details>
+        <summary>Die 3 Regeln, an denen alles hängt</summary>
+        <ul class="tiny" style="padding-left:18px;margin-top:8px">
+          <li><b>Nah ans Versagen.</b> Jeder Satz endet 1–2 Wdh. bevor nichts mehr geht. Ein Satz „locker durch“ ist verlorene Zeit.</li>
+          <li><b>Progression.</b> Obere Wdh.-Zahl erreicht → nächste schwerere Variante, nicht mehr Wiederholungen. Notiz-Feld nutzen.</li>
+          <li><b>Protein.</b> ca. 1,6–2 g je kg Körpergewicht am Tag. Ohne das verpufft das Training weitgehend.</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="card sect">
+      <h3>Verlauf</h3>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+</div>
+
+<div class="printonly" id="printall"></div>
+
+<div class="bar">
+  <button class="t" id="timer" onclick="tick()">45 s</button>
+  <button class="pri" id="fin" onclick="finish()">Einheit abschließen</button>
+  <button onclick="pdf()">PDF</button>
+</div>
+
+<script>
+/* ---------- Strichfiguren ---------------------------------------------- */
+const L={torso:30,uarm:15,farm:15,thigh:20,shin:20,head:6.5,foot:7};
+const P=(p,a,l)=>{const r=a*Math.PI/180;return[p[0]+Math.cos(r)*l,p[1]+Math.sin(r)*l]};
+const MI=a=>180-a;
+
+function fig(o){
+  const E=[],hip=[0,0],neck=P(hip,o.t,L.torso),head=P(neck,o.t,L.head+3.5);
+  const ln=(a,b,w,c)=>E.push({a,b,w:w||3.2,c:c||''});
+  ln(hip,neck,4);
+  const leg=(l1,l2,f,w)=>{const k=P(hip,l1,L.thigh),ft=P(k,l2,L.shin);
+    ln(hip,k,w);ln(k,ft,w);ln(ft,P(ft,(f===undefined?l2-90:f),L.foot),w);return ft};
+  const arm=(a1,a2,w)=>{const e=P(neck,a1,L.uarm),h=P(e,a2,L.farm);
+    ln(neck,e,w);ln(e,h,w);return h};
+  const feet=[],hands=[];
+  if(o.front){
+    feet.push(leg(o.l1||95,o.l2||92,o.f,3.2));
+    feet.push(leg(MI(o.l1||95),MI(o.l2||92),o.f===undefined?undefined:MI(o.f),3.2));
+    hands.push(arm(MI(o.a1),MI(o.a2),3.2));
+    hands.push(arm(o.a1,o.a2,3.2));
+  }else{
+    if(o.l1b!==undefined)feet.push(leg(o.l1b,o.l2b,o.fb,2.2));
+    feet.push(leg(o.l1,o.l2,o.f,3.2));
+    if(o.a1b!==undefined)hands.push(arm(o.a1b,o.a2b,2.2));
+    hands.push(arm(o.a1,o.a2,3.2));
+  }
+  E.push({circ:head,r:L.head});
+  const bb=()=>{let xs=[],ys=[];E.forEach(e=>{if(e.circ){xs.push(e.circ[0]-e.r,e.circ[0]+e.r);ys.push(e.circ[1]-e.r,e.circ[1]+e.r)}
+    else{xs.push(e.a[0],e.b[0]);ys.push(e.a[1],e.b[1])}});
+    return[Math.min(...xs),Math.max(...xs),Math.min(...ys),Math.max(...ys)]};
+  let[x0,x1,y0,y1]=bb();
+  if(o.ground){const y=Math.max(y1,...feet.map(f=>f[1]))+2.5;ln([x0-7,y],[x1+7,y],2,'gnd')}
+  if(o.bench&&feet.length>1){const f=feet[0];ln([f[0]-9,f[1]+3],[f[0]+9,f[1]+3],3,'eq');ln([f[0]+7,f[1]+3],[f[0]+7,f[1]+16],2.4,'eq')}
+  if(o.bar){const y=Math.min(...hands.map(h=>h[1]))-2;const x=hands[hands.length-1][0];ln([x-16,y],[x+16,y],3.4,'eq')}
+  if(o.strap){[y0]=[bb()[2]];const ay=y0-30;hands.forEach(h=>ln(h,[h[0]+(o.sx||0),ay],1.8,'eq'));
+    const h=hands[hands.length-1];ln([h[0]+(o.sx||0)-8,ay],[h[0]+(o.sx||0)+8,ay],3,'eq')}
+  [x0,x1,y0,y1]=bb();
+  const W=118,H=104,pad=7;
+  const k=Math.min((W-2*pad)/Math.max(x1-x0,1),(H-2*pad)/Math.max(y1-y0,1));
+  const tx=pad+((W-2*pad)-(x1-x0)*k)/2-x0*k, ty=pad+((H-2*pad)-(y1-y0)*k)/2-y0*k;
+  const s=E.map(e=>e.circ
+    ?`<circle cx="${e.circ[0].toFixed(1)}" cy="${e.circ[1].toFixed(1)}" r="${e.r}"/>`
+    :`<line x1="${e.a[0].toFixed(1)}" y1="${e.a[1].toFixed(1)}" x2="${e.b[0].toFixed(1)}" y2="${e.b[1].toFixed(1)}" stroke-width="${e.w}" class="${e.c}"/>`).join('');
+  return`<svg viewBox="0 0 ${W} ${H}" class="fig"><g transform="translate(${tx.toFixed(1)},${ty.toFixed(1)}) scale(${k.toFixed(3)})">${s}</g></svg>`;
+}
+
+/* ---------- Trainingsplan ---------------------------------------------- */
+const DAYS=[
+{id:'A',t:'Push',col:'var(--a)',sub:'Brust · Schulter · Trizeps',
+ hint:'Als Zirkel: Übung 1→5 durchlaufen, dann 45 s Pause. 3 Runden.',ex:[
+ {n:'Liegestütze',s:3,r:'bis 1–2 Wdh. vor dem Versagen',
+  f:[['Oben',{t:185,l1:38,l2:38,f:80,a1:88,a2:88,ground:1}],['Unten',{t:185,l1:38,l2:38,f:80,a1:30,a2:125,ground:1}]],
+  how:['Hände etwas breiter als schulterbreit, Finger nach vorn.','Körper eine Linie von Kopf bis Ferse – Po anspannen, Rippen nach unten ziehen.','3 Sekunden kontrolliert runter, unten 1 Sekunde halten, kraftvoll hoch.','Ellenbogen ca. 45° zum Körper, nicht auf Schulterhöhe abspreizen.'],
+  fo:'Die langsame Absenkphase erzeugt den Wachstumsreiz – nicht die Anzahl.',
+  err:['Hüfte hängt durch oder ragt nach oben.','Kopf in den Nacken gelegt – Blick bleibt schräg nach unten.','Nur halbe Bewegung: Brust sollte auf Faustbreite an den Boden.'],
+  pr:['Füße erhöht (Stuhl/Bank)','Archer-Liegestütz','einarmig mit Hand am TRX-Griff']},
+ {n:'Kurzhantel-Schulterdrücken',s:3,r:'10–15 Wdh.',
+  f:[['Start',{t:-90,l1:92,l2:88,a1:105,a2:-75,ground:1}],['Ende',{t:-90,l1:92,l2:88,a1:-88,a2:-88,ground:1}]],
+  how:['Stehend, Füße hüftbreit, Bauch fest, Rippen nicht nach vorn kippen.','Hanteln auf Schulterhöhe, Handflächen nach vorn.','Nach oben drücken bis die Arme fast gestreckt sind – Ellenbogen nicht durchschlagen.','Langsam zurück, bis die Oberarme etwas unter Schulterhöhe sind.'],
+  fo:'Rumpf bleibt stabil – kein Hohlkreuz, kein Schwung aus den Beinen.',
+  err:['Ausweichen ins Hohlkreuz, sobald es schwer wird.','Hanteln vor dem Kopf statt seitlich in der Schulterebene.'],
+  pr:['langsamer (3 s runter)','1,5 Wiederholungen: ganz hoch, halb runter, halb hoch','einarmig im Wechsel']},
+ {n:'TRX Chest Press',s:3,r:'10–15 Wdh.',
+  f:[['Start',{t:-150,l1:35,l2:35,a1:-160,a2:-160,strap:1,ground:1}],['Ende',{t:-150,l1:35,l2:35,a1:-115,a2:175,strap:1,ground:1}]],
+  how:['Mit dem Rücken zum Anker, Griffe in Schulterhöhe, Körper schräg nach vorn.','Je weiter die Füße nach hinten wandern, desto schwerer wird es.','Kontrolliert nach vorn absenken bis die Hände neben der Brust sind.','Gedrückt wird über die Brust, nicht über die Schultern.'],
+  fo:'Der Körper bleibt bretthart – die Bewegung passiert nur in den Armen.',
+  err:['Hüfte knickt ein („Banane“).','Schultern wandern nach oben zu den Ohren.'],
+  pr:['Füße weiter nach hinten','ein Fuß angehoben','oben 2 s halten']},
+ {n:'Seitheben',s:3,r:'15 Wdh.',
+  f:[['Start',{front:1,t:-90,a1:95,a2:95,ground:1}],['Ende',{front:1,t:-90,a1:8,a2:5,ground:1}]],
+  how:['Leichte Gewichte reichen – hier zählt Technik, nicht Last.','Arme leicht gebeugt seitlich bis Schulterhöhe heben.','Kleiner Finger minimal höher als der Daumen.','Langsam ablassen, unten nicht ablegen – Spannung halten.'],
+  fo:'Bewegt wird über die seitliche Schulter, der Oberkörper bleibt ruhig.',
+  err:['Schwung aus den Knien.','Über Schulterhöhe heben – ab da übernimmt der Nacken.'],
+  pr:['3 s Absenkphase','oben 2 s halten','Drop-Satz: 10 mit Gewicht, dann 10 ohne']},
+ {n:'Trizeps Overhead Extension',s:3,r:'15 Wdh.',
+  f:[['Start',{t:-90,l1:92,l2:88,a1:-88,a2:-88,ground:1}],['Ende',{t:-90,l1:92,l2:88,a1:-88,a2:-165,ground:1}]],
+  how:['Eine Hantel beidhändig über dem Kopf, Oberarme senkrecht neben den Ohren.','Nur der Unterarm bewegt sich – hinter den Kopf absenken.','Bis zur Dehnung senken, dann strecken ohne die Ellenbogen zu blockieren.'],
+  fo:'Die Oberarme bleiben absolut still. Das ist der ganze Trick.',
+  err:['Ellenbogen wandern nach außen und nach vorn.','Hohlkreuz, um mehr Gewicht zu bewegen.'],
+  pr:['einarmig','2 s Pause in der Dehnung','langsamer Negativteil']}]},
+
+{id:'B',t:'Pull',col:'var(--b)',sub:'Rücken · Bizeps · Bauch',
+ hint:'Klimmzüge zuerst, solange du frisch bist. 45–60 s Pause zwischen den Sätzen.',ex:[
+ {n:'Klimmzüge',s:3,r:'max. Wdh. (unter 5 → Negative)',
+  f:[['Hängen',{t:-90,l1:105,l2:70,a1:-80,a2:-80,bar:1}],['Oben',{t:-92,l1:105,l2:70,a1:-45,a2:-125,bar:1}]],
+  how:['Griff etwas breiter als schulterbreit, Handrücken zu dir (Obergriff).','Vor dem Zug: Schulterblätter nach unten ziehen – erst dann anziehen.','Brust Richtung Stange, Ellenbogen nach unten-hinten denken.','Kontrolliert ganz ablassen, Arme strecken, aber Schultern aktiv lassen.'],
+  fo:'Wenn weniger als 5 sauber gehen: hochspringen und 5 Sekunden kontrolliert ablassen. 5 Negative pro Satz.',
+  err:['Kippen und Schwungholen (Kipping) – nimmt dem Rücken die Arbeit ab.','Nur halb ablassen, um sich Wiederholungen zu erschleichen.'],
+  pr:['Negative → volle Wiederholungen','oben 2 s halten','Pause 2 s auf halber Höhe','Zusatzgewicht im Rucksack']},
+ {n:'TRX Row',s:3,r:'10–15 Wdh.',
+  f:[['Start',{t:-165,l1:15,l2:15,f:-50,a1:-20,a2:-20,strap:1,ground:1}],['Ende',{t:-165,l1:15,l2:15,f:-50,a1:-50,a2:30,strap:1,ground:1}]],
+  how:['Griffe fassen, zurücklehnen, Körper gerade wie ein Brett.','Je weiter die Füße nach vorn, desto schwerer.','Ziehen bis die Hände neben die unteren Rippen kommen.','Oben Schulterblätter zusammenziehen, 1 s halten.'],
+  fo:'Zug kommt aus dem Rücken – die Arme sind nur Haken.',
+  err:['Hüfte sackt ab.','Ellenbogen weit vom Körper weg (belastet die Schulter statt den Rücken).'],
+  pr:['Füße weiter nach vorn','Füße erhöht','einarmig']},
+ {n:'Einarmiges Kurzhantel-Rudern',s:3,r:'12–15 je Seite',
+  f:[['Start',{t:170,l1:78,l2:96,a1:92,a2:92,ground:1}],['Ende',{t:170,l1:78,l2:96,a1:55,a2:150,ground:1}]],
+  how:['Hüfte nach hinten schieben, Oberkörper fast waagerecht, Rücken gerade.','Freie Hand stützt auf Oberschenkel oder Stuhl.','Hantel zur Hüfte ziehen, oben 2 s halten.','Unten die Schulter bewusst nach vorn ausdehnen lassen.'],
+  fo:'Die 2 Sekunden Pause oben sind bei nur 10 kg das Wichtigste am Satz.',
+  err:['Oberkörper rotiert bei jeder Wiederholung mit.','Runder Rücken.'],
+  pr:['3 s Absenkphase','3 s Pause oben','beide Arme gleichzeitig, Oberkörper waagerecht']},
+ {n:'Hanging Knee Raise',s:3,r:'10–15 Wdh.',
+  f:[['Hängen',{t:-90,l1:90,l2:90,a1:-85,a2:-85,bar:1}],['Oben',{t:-92,l1:195,l2:95,a1:-85,a2:-85,bar:1}]],
+  how:['An der Stange hängen, Schultern aktiv (nicht durchhängen lassen).','Becken leicht nach hinten kippen, dann die Knie zur Brust ziehen.','Langsam ablassen – kein Pendeln.'],
+  fo:'Die Bewegung startet im Becken, nicht in der Hüftbeuge.',
+  err:['Schwingen und Schwung nutzen.','Nur die Knie heben ohne Becken zu kippen – dann arbeitet der Hüftbeuger statt der Bauch.'],
+  pr:['gestreckte Beine (L-Sit)','oben 2 s halten','Beine langsam über 5 s absenken']},
+ {n:'Kurzhantel-Curls',s:3,r:'12–15 Wdh.',
+  f:[['Start',{t:-90,l1:92,l2:88,a1:95,a2:95,ground:1}],['Ende',{t:-90,l1:92,l2:88,a1:100,a2:-65,ground:1}]],
+  how:['Ellenbogen bleiben am Rumpf fixiert.','Langsam hoch (2 s), oben kurz anspannen, 3 s runter.','Unten die Arme vollständig strecken.'],
+  fo:'Bei 10 kg zählt nur noch Zeit unter Spannung – langsam ist hier stärker als schwer.',
+  err:['Schwung aus dem Oberkörper.','Ellenbogen wandern nach vorn – dann zieht die Schulter mit.'],
+  pr:['3–4 s Absenkphase','Hammer-Curls im Wechsel','21er: 7 unten, 7 oben, 7 ganz']}]},
+
+{id:'C',t:'Beine & Rumpf',col:'var(--c)',sub:'Beine · Gesäß · Core',
+ hint:'Sätze pro Seite zählen. Bei Beinübungen ruhig 60 s Pause nehmen.',ex:[
+ {n:'Bulgarian Split Squat',s:3,r:'12–15 je Seite',
+  f:[['Start',{t:-92,l1:100,l2:80,l1b:40,l2b:-10,a1:95,a2:95,ground:1,bench:1}],['Unten',{t:-100,l1:120,l2:55,l1b:55,l2b:-25,a1:95,a2:95,ground:1,bench:1}]],
+  how:['Hinterer Fußrist auf Stuhl/Bank, vorderer Fuß ca. 60–70 cm davor.','Senkrecht absenken, bis der hintere Knie fast den Boden berührt.','Oberkörper minimal nach vorn geneigt, Druck über die ganze Vorderfußsohle.','Hanteln hängen locker seitlich.'],
+  fo:'Die beste Beinübung, die du mit 10 kg noch hart machen kannst.',
+  err:['Vorderer Fuß zu nah an der Bank – Knie schiebt weit über die Zehen.','Nach hinten abkippen statt senkrecht absenken.'],
+  pr:['3 s Absenkphase','unten 2 s Pause','Fuß vorne erhöht (größerer Weg)']},
+ {n:'Einbeiniges Kreuzheben (RDL)',s:3,r:'12 je Seite',
+  f:[['Start',{t:-90,l1:92,l2:90,a1:95,a2:95,ground:1}],['Ende',{t:160,l1:88,l2:92,l1b:-5,l2b:-5,a1:100,a2:100,ground:1}]],
+  how:['Auf einem Bein stehen, leichte Kniebeuge, Rücken gerade.','Hüfte nach hinten schieben, freies Bein streckt sich nach hinten aus.','Absenken bis der Oberkörper waagerecht ist und die Rückseite zieht.','Über die Gesäßmuskulatur wieder aufrichten.'],
+  fo:'Trainiert Rückseite und Balance gleichzeitig – bewusst langsam.',
+  err:['Runder Rücken.','Hüfte rotiert nach außen – Becken bleibt parallel zum Boden.'],
+  pr:['schwerere Hantel in der Gegenhand','3 s runter','unten 2 s Pause']},
+ {n:'Pistol Squat am TRX',s:3,r:'8 je Seite',
+  f:[['Start',{t:-90,l1:90,l2:90,l1b:175,l2b:175,a1:-25,a2:-25,strap:1,ground:1}],['Unten',{t:-110,l1:130,l2:35,l1b:185,l2b:185,a1:-25,a2:-25,strap:1,ground:1}]],
+  how:['Griffe halten, ein Bein nach vorn ausstrecken.','So tief absenken wie kontrollierbar – die Griffe nur zum Ausbalancieren nutzen.','Ferse des Standbeins bleibt am Boden.'],
+  fo:'Die Arme helfen so wenig wie möglich. Wer sich hochzieht, trainiert nichts.',
+  err:['Sich am TRX hochziehen.','Knie kippt nach innen.'],
+  pr:['weniger Zug an den Griffen','3 s runter','unten 2 s halten']},
+ {n:'Wadenheben einbeinig',s:3,r:'20 Wdh.',
+  f:[['Unten',{t:-90,l1:90,l2:90,f:0,ground:1}],['Oben',{t:-90,l1:90,l2:90,f:-45,ground:1}]],
+  how:['Vorfuß auf eine Stufe, Ferse hängt frei.','Ganz nach unten dehnen, dann maximal hoch auf den Ballen.','Oben 1 s halten, langsam ablassen.','Zum Ausbalancieren an der Wand abstützen.'],
+  fo:'Voller Bewegungsumfang – die Dehnung unten ist der Reiz.',
+  err:['Kurze Wippbewegungen ohne Dehnung.','Knie beugen und strecken statt nur das Sprunggelenk.'],
+  pr:['Hantel in der Hand','2 s oben halten','noch langsamer ablassen']},
+ {n:'Situps',s:3,r:'15–20 Wdh.',
+  f:[['Start',{t:178,l1:-65,l2:85,a1:160,a2:120,ground:1}],['Ende',{t:-65,l1:-65,l2:85,a1:110,a2:130,ground:1}]],
+  how:['Rücken flach, Knie gebeugt, Füße am Boden.','Wirbel für Wirbel aufrollen, nicht als Brett hochklappen.','Kontrolliert wieder abrollen – der Kopf legt sich zuletzt ab.'],
+  fo:'Kinn bleibt eine Faustbreite von der Brust entfernt.',
+  err:['Am Nacken ziehen.','Mit Schwung hochschnellen.'],
+  pr:['Arme über Kopf gestreckt','Hantel vor der Brust','langsam: 3 s hoch, 3 s runter']},
+ {n:'Side Plank',s:2,r:'30 s je Seite',
+  f:[['Halten',{t:-160,l1:15,l2:15,a1:100,a2:0,ground:1}]],
+  how:['Auf dem Unterarm, Ellenbogen direkt unter der Schulter.','Hüfte anheben bis Schulter, Hüfte und Fuß eine Linie bilden.','Gleichmäßig weiteratmen.'],
+  fo:'Hüfte aktiv nach oben drücken statt nur „halten“.',
+  err:['Hüfte sackt langsam ab.','Kopf hängt nach vorn.'],
+  pr:['oberes Bein anheben','Zeit verlängern','oberen Arm senkrecht nach oben strecken']}]}
+];
+
+/* ---------- Zustand ------------------------------------------------------ */
+const KEY='tt_workout_v1', DE=['So','Mo','Di','Mi','Do','Fr','Sa'];
+const iso=d=>d.toISOString().slice(0,10);
+const today=new Date(), tIso=iso(today), wd=today.getDay();
+const weekend=(wd===0||wd===6);
+let S=load(), view=null;
+
+function load(){
+  let d=null;
+  const m=location.hash.match(/^#s=(.+)$/);
+  if(m){try{d=JSON.parse(decodeURIComponent(escape(atob(m[1]))))}catch(e){}}
+  if(!d){try{d=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}}
+  if(!d||d.v!==1)d={v:1,n:0,log:[],notes:{},day:tIso,checks:{}};
+  if(d.day!==tIso){d.day=tIso;d.checks={}}
+  return d;
+}
+let th=null;
+function save(){
+  localStorage.setItem(KEY,JSON.stringify(S));
+  clearTimeout(th);
+  th=setTimeout(()=>{try{history.replaceState(null,'','#s='+btoa(unescape(encodeURIComponent(JSON.stringify(S)))))}catch(e){}},500);
+}
+const planIdx=()=>S.n%3;
+const cur=()=>view===null?planIdx():view;
+
+/* ---------- Rendern ------------------------------------------------------ */
+function render(){
+  const d=DAYS[cur()];
+  document.getElementById('sub').textContent =
+    DE[wd]+', '+today.toLocaleDateString('de-DE')+' · '+
+    (weekend?'Wochenende – Ruhetag':'Einheit '+(S.n+1))+
+    ' · nächste: '+DAYS[(planIdx()+1)%3].id+' → '+DAYS[(planIdx()+2)%3].id;
+
+  document.getElementById('switch').innerHTML=DAYS.map((x,i)=>
+    `<button class="${i===cur()?'on':''}" onclick="view=${i};render()">Tag ${x.id} · ${x.t}</button>`).join('');
+
+  document.getElementById('app').innerHTML=
+   `<div class="card">
+      <div class="dayhead" style="background:${d.col}">
+        <div class="pill">Tag ${d.id}${cur()===planIdx()?' · heute':''}</div>
+        <h2>${d.t}</h2><p>${d.sub} — ${d.hint}</p>
+      </div>
+      ${d.ex.map((e,i)=>card(d,e,i)).join('')}
+    </div>`;
+
+  document.getElementById('log').innerHTML = S.log.length
+    ? S.log.slice(0,12).map(r=>`<div class="row"><span><b>${r.d}</b> · Tag ${r.k}</span><span>${r.s} Sätze</span></div>`).join('')
+    : '<div class="tiny">Noch keine Einheit abgeschlossen.</div>';
+}
+
+function card(d,e,i){
+  const id=d.id+i, done=S.checks[id]||[];
+  return `<div class="ex">
+    <div class="exhead">
+      <div><div class="exname">${e.n}</div><div class="exmeta">${e.s} Sätze · ${e.r}</div></div>
+      <button class="i" id="ib${id}" onclick="toggleInfo('${id}')">i</button>
+    </div>
+    <div class="sets"><span class="lbl">Sätze</span>${
+      Array.from({length:e.s},(_,k)=>`<button class="set ${done.includes(k)?'done':''}" onclick="tset('${id}',${k})">${done.includes(k)?'✓':k+1}</button>`).join('')}</div>
+    <input class="note" placeholder="Gewicht / Wdh. notieren" value="${(S.notes[id]||'').replace(/"/g,'&quot;')}" oninput="S.notes['${id}']=this.value;save()">
+    <div class="info" id="in${id}">
+      <div class="figs">${e.f.map(([lb,p])=>`<div class="figbox"><span>${lb}</span>${fig(p)}</div>`).join('')}</div>
+      <h4>Ausführung</h4><ul>${e.how.map(x=>`<li>${x}</li>`).join('')}</ul>
+      <h4>Worauf es ankommt</h4><ul><li>${e.fo}</li></ul>
+      <h4>Häufige Fehler</h4><ul class="warn">${e.err.map(x=>`<li>${x}</li>`).join('')}</ul>
+      <h4>Progression</h4><ul>${e.pr.map(x=>`<li>${x}</li>`).join('')}</ul>
+    </div></div>`;
+}
+
+function toggleInfo(id){
+  document.getElementById('in'+id).classList.toggle('open');
+  document.getElementById('ib'+id).classList.toggle('on');
+}
+function tset(id,k){
+  const a=S.checks[id]||(S.checks[id]=[]);
+  const j=a.indexOf(k); j<0?a.push(k):a.splice(j,1);
+  save();render();
+}
+
+/* ---------- Timer / Abschluss / PDF -------------------------------------- */
+let tv=null,ts=45,ac=null;
+function tick(){
+  const b=document.getElementById('timer');
+  if(tv){clearInterval(tv);tv=null;b.textContent='45 s';return}
+  try{ac=ac||new(window.AudioContext||window.webkitAudioContext)()}catch(e){}
+  ts=45;b.textContent=ts+' s';
+  tv=setInterval(()=>{ts--;b.textContent=ts+' s';
+    if(ts<=0){clearInterval(tv);tv=null;b.textContent='45 s';beep()}},1000);
+}
+function beep(){try{const o=ac.createOscillator(),g=ac.createGain();
+  o.connect(g);g.connect(ac.destination);o.frequency.value=880;g.gain.value=.15;
+  o.start();o.stop(ac.currentTime+.25)}catch(e){}}
+
+function finish(){
+  const d=DAYS[cur()];
+  const s=Object.keys(S.checks).filter(k=>k[0]===d.id).reduce((n,k)=>n+S.checks[k].length,0);
+  if(!s&&!confirm('Kein Satz abgehakt. Trotzdem abschließen?'))return;
+  S.log.unshift({d:today.toLocaleDateString('de-DE'),k:d.id,s});
+  S.log=S.log.slice(0,60); S.n++; S.checks={}; view=null;
+  save();render();
+  alert('Erledigt. Nächste Einheit: Tag '+DAYS[planIdx()].id+' – '+DAYS[planIdx()].t);
+}
+
+function pdf(){
+  document.getElementById('printall').innerHTML=
+   `<div style="padding:12px 4px"><h1 style="margin:0">Morgen-Workout · Mo–Fr</h1>
+    <div class="tiny">Rotation A → B → C, fortlaufend über die Werktage · Stand: ${today.toLocaleDateString('de-DE')}</div></div>`+
+   DAYS.map(d=>`<div class="card"><div class="dayhead" style="background:${d.col}">
+      <h2>Tag ${d.id} — ${d.t}</h2><p>${d.sub} — ${d.hint}</p></div>`+
+      d.ex.map(e=>`<div class="ex"><div class="exname">${e.n}</div>
+        <div class="exmeta">${e.s} Sätze · ${e.r}</div>
+        <div class="figs">${e.f.map(([lb,p])=>`<div class="figbox"><span>${lb}</span>${fig(p)}</div>`).join('')}</div>
+        <h4>Ausführung</h4><ul>${e.how.map(x=>`<li>${x}</li>`).join('')}</ul>
+        <h4>Häufige Fehler</h4><ul>${e.err.map(x=>`<li>${x}</li>`).join('')}</ul>
+        <h4>Progression</h4><ul>${e.pr.map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')+
+      `</div>`).join('');
+  setTimeout(()=>window.print(),80);
+}
+document.querySelector('.bar button:last-child').textContent='Als PDF sichern';
+render();
+</script>
+</body>
+</html>
