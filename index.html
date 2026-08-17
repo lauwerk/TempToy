@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TempToy</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧰</text></svg>">
+<style>
+  :root {
+    --bg: #faf5ee;
+    --card: #ffffff;
+    --ink: #2b2420;
+    --muted: #7a6f63;
+    --accent: #c1622d;
+    --accent-dark: #9c4d22;
+    --border: #e8ddce;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(circle at 20% -10%, #fff1e0 0%, var(--bg) 45%);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+  header { max-width: 640px; margin: 0 auto 28px; text-align: center; }
+  .wordmark {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: "SF Mono", "Courier New", monospace;
+    font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent-dark); background: #fff1e0; border: 1px solid #f1d9b8;
+    padding: 4px 12px; border-radius: 999px; margin-bottom: 14px;
+  }
+  h1 { margin: 0 0 8px; font-size: 30px; letter-spacing: -0.01em; }
+  p.sub { margin: 0; color: var(--muted); font-size: 15px; }
+  .grid { max-width: 640px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 560px) { .grid { grid-template-columns: 1fr 1fr; } }
+  a.card {
+    display: flex; align-items: flex-start; gap: 14px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 18px; text-decoration: none; color: var(--ink);
+    box-shadow: 0 1px 2px rgba(43,36,32,0.04);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  a.card:active { transform: scale(0.98); background: #fbf3ea; }
+  @media (hover: hover) {
+    a.card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(43,36,32,0.08); border-color: #f1d9b8; }
+  }
+  .icon { font-size: 26px; line-height: 1; flex-shrink: 0; }
+  .card-title { font-weight: 600; font-size: 16px; margin-bottom: 3px; }
+  .card-desc { font-size: 13.5px; color: var(--muted); line-height: 1.4; }
+  .arrow { margin-left: auto; color: var(--accent); font-size: 18px; align-self: center; flex-shrink: 0; }
+  .empty {
+    grid-column: 1 / -1; text-align: center; color: var(--muted);
+    font-size: 14px; padding: 30px 10px;
+  }
+  .empty a { color: var(--accent-dark); }
+  .skeleton {
+    grid-column: 1 / -1; text-align: center; color: var(--muted); font-size: 14px; padding: 20px;
+  }
+  footer { max-width: 640px; margin: 36px auto 0; text-align: center; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <header>
+    <div class="wordmark">🧰 TempToy</div>
+    <h1>Werkzeugkiste</h1>
+    <p class="sub">Kleine Tools für Pizza, Fitness &amp; Co. — direkt im Browser.</p>
+  </header>
+
+  <main class="grid" id="grid">
+    <p class="skeleton">Lade Tools …</p>
+  </main>
+
+  <footer>lauwerk/TempToy</footer>
+
+<script>
+  const OWNER = "lauwerk";
+  const REPO = "TempToy";
+  const BRANCH = "main";
+
+  function formatName(name) {
+    return name.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderCard(tool) {
+    return `
+      <a class="card" href="${tool.folder}/">
+        <span class="icon">${tool.icon}</span>
+        <span>
+          <span class="card-title">${escapeHtml(tool.title)}</span>
+          ${tool.desc ? `<span class="card-desc">${escapeHtml(tool.desc)}</span>` : ""}
+        </span>
+        <span class="arrow">→</span>
+      </a>`;
+  }
+
+  async function loadTools() {
+    const grid = document.getElementById("grid");
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${OWNER}/${REPO}/contents/?ref=${BRANCH}`,
+        { cache: "no-store" }
+      );
+      if (!res.ok) throw new Error("GitHub API: " + res.status);
+      const entries = await res.json();
+      const dirs = entries.filter(e => e.type === "dir");
+
+      const results = await Promise.all(dirs.map(async (dir) => {
+        try {
+          const pageRes = await fetch(`${dir.name}/index.html`, { cache: "no-store" });
+          if (!pageRes.ok) return null; // kein index.html -> kein Tool, überspringen
+          const html = await pageRes.text();
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          const title = doc.querySelector("title")?.textContent?.trim() || formatName(dir.name);
+          const desc = doc.querySelector('meta[name="description"]')?.content?.trim() || "";
+          const icon = doc.querySelector('meta[name="tool-icon"]')?.content?.trim() || "🔧";
+          return { folder: dir.name, title, desc, icon };
+        } catch {
+          return null;
+        }
+      }));
+
+      const tools = results.filter(Boolean).sort((a, b) => a.title.localeCompare(b.title, "de"));
+
+      grid.innerHTML = tools.length
+        ? tools.map(renderCard).join("")
+        : `<p class="empty">Noch keine Tools gefunden.<br><a href="https://github.com/${OWNER}/${REPO}">Repo auf GitHub ansehen</a></p>`;
+
+    } catch (err) {
+      grid.innerHTML = `<p class="empty">Tools konnten nicht geladen werden (${escapeHtml(err.message)}).<br>
+        <a href="https://github.com/${OWNER}/${REPO}">Repo auf GitHub ansehen</a></p>`;
+    }
+  }
+
+  loadTools();
+</script>
+</body>
+</html>
