@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Arbeitszeit-Planer</title>
+<meta name="description" content="Wochenplaner für Arbeitszeit Mo–Fr: Zielstunden, Büro/Homeoffice-Verteilung und Ampel-Status auf einen Blick.">
+<meta name="tool-icon" content="🚦">
+<link rel="stylesheet" href="../print.css" media="print">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-1: #12151b;
+    --bg-2: #1a1f28;
+    --panel: #1f242c;
+    --panel-border: #2c333d;
+    --track-bg: #141922;
+    --text-primary: #eef1f5;
+    --text-muted: #6b7480;
+    --accent-office: #5b9bff;
+    --accent-home: #c084fc;
+    --signal-red: #ef4444;
+    --signal-amber: #f5b400;
+    --signal-green: #2ecc71;
+    --focus-ring: #7dd3fc;
+    --radius-panel: 10px;
+    --radius-btn: 6px;
+    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 120%, #23180f 0%, transparent 55%), linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .app {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 28px 16px 36px;
+  }
+
+  .board-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    border-bottom: 1px solid var(--panel-border);
+    padding-bottom: 14px;
+  }
+
+  .board-title {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .board-target {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .board-target input {
+    width: 56px;
+    background: var(--track-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-btn);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    text-align: center;
+    padding: 4px 2px;
+  }
+
+  .board-target input:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-top: 22px;
+  }
+
+  .day-col {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-panel);
+    padding: 10px 4px 12px;
+  }
+
+  .badge-star {
+    position: absolute;
+    top: -8px;
+    right: -4px;
+    font-size: 14px;
+    display: none;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+  }
+
+  .day-col.qualifies .badge-star { display: block; }
+
+  .ho-toggle {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--track-bg);
+    border: 1px solid var(--panel-border);
+    transition: border-color .25s ease;
+  }
+
+  .ho-toggle:focus-within {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .ho-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .ho-icon {
+    font-size: 13px;
+    pointer-events: none;
+  }
+
+  .day-name {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: .02em;
+    color: var(--day-color, var(--accent-office));
+    transition: color .25s ease;
+  }
+
+  .value-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+  }
+
+  .vslider {
+    width: 40px;
+    height: 132px;
+    display: flex;
+    justify-content: center;
+    touch-action: none;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .vslider:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 4px;
+  }
+
+  .vslider-track {
+    position: relative;
+    width: 12px;
+    height: 100%;
+    background: var(--track-bg);
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px var(--panel-border);
+  }
+
+  .tick {
+    position: absolute;
+    left: -4px;
+    right: -4px;
+    height: 1px;
+    background: rgba(255,255,255,.12);
+  }
+
+  .vslider-fill {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    border-radius: 6px;
+    background: var(--day-color, var(--accent-office));
+    transition: background-color .25s ease;
+  }
+
+  .vslider-thumb {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 18px;
+    height: 18px;
+    margin-left: -9px;
+    border-radius: 50%;
+    background: #0f1319;
+    border: 3px solid var(--day-color, var(--accent-office));
+    transform: translateY(50%);
+    box-shadow: 0 2px 4px rgba(0,0,0,.4);
+    transition: border-color .25s ease;
+  }
+
+  .gemeinsam-label {
+    font-family: var(--font-sans);
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-muted);
+    height: 12px;
+    transition: color .25s ease;
+  }
+
+  .gemeinsam-label.active {
+    color: var(--day-color, var(--accent-home));
+    font-weight: 600;
+  }
+
+  .gemeinsam-label.hidden-slot { visibility: hidden; }
+
+  .board-footer {
+    margin-top: 24px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-panel);
+    padding: 16px;
+  }
+
+  .signal-unit {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .signal-lamp {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 8px 7px;
+    background: #0d1117;
+    border-radius: 8px;
+    border: 1px solid var(--panel-border);
+    flex-shrink: 0;
+  }
+
+  .lamp {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    display: block;
+  }
+
+  .lamp.red { background: #3a1516; }
+  .lamp.amber { background: #3a2e10; }
+  .lamp.green { background: #123a1f; }
+
+  .signal-lamp[data-state="red"] .lamp.red {
+    background: var(--signal-red);
+    box-shadow: 0 0 10px 2px rgba(239,68,68,.7);
+  }
+  .signal-lamp[data-state="amber"] .lamp.amber {
+    background: var(--signal-amber);
+    box-shadow: 0 0 10px 2px rgba(245,180,0,.7);
+  }
+  .signal-lamp[data-state="green"] .lamp.green {
+    background: var(--signal-green);
+    box-shadow: 0 0 10px 2px rgba(46,204,113,.7);
+  }
+
+  @keyframes lampPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .signal-lamp[data-state="red"] .lamp.red,
+    .signal-lamp[data-state="amber"] .lamp.amber,
+    .signal-lamp[data-state="green"] .lamp.green {
+      animation: lampPulse 2.4s ease-in-out infinite;
+    }
+  }
+
+  .signal-total {
+    font-family: var(--font-mono);
+    font-size: 26px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+
+  .signal-sub {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .goals {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .goal {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .goal.met { color: var(--text-primary); }
+
+  .goal-mark {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .goal.met .goal-mark { color: var(--signal-green); }
+
+  .goal-hint {
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .btn {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: 11px 8px;
+    border-radius: var(--radius-btn);
+    border: 1px solid var(--panel-border);
+    background: #171b22;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+
+  .btn:hover { border-color: #3b4250; }
+
+  .btn:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .btn.secondary { color: var(--text-muted); }
+
+  .print-date {
+    display: none;
+  }
+
+  @media print {
+    body { background: #fff; color: #000; }
+    .actions { display: none; }
+    .print-date {
+      display: block;
+      margin-top: 16px;
+      font-size: 11px;
+      color: #555;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="board-header">
+    <div class="board-title">Wochen-Plan</div>
+    <div class="board-target">
+      <label for="targetInput">Ziel</label>
+      <input type="number" id="targetInput" min="0" max="40" step="0.5" value="16" inputmode="decimal">
+      <span>Std/Wo.</span>
+    </div>
+  </header>
+
+  <div class="week-grid" id="weekGrid"></div>
+
+  <div class="board-footer">
+    <div class="signal-unit">
+      <div class="signal-lamp" id="signalLamp" data-state="red">
+        <span class="lamp red"></span>
+        <span class="lamp amber"></span>
+        <span class="lamp green"></span>
+      </div>
+      <div class="signal-readout">
+        <div class="signal-total" id="totalDisplay">0,0</div>
+        <div class="signal-sub">von <span id="targetDisplay">16,0</span> Std</div>
+      </div>
+    </div>
+    <div class="goals">
+      <div class="goal" id="goalOffice">
+        <span class="goal-mark">○</span>
+        <span>Langer Bürotag <span class="goal-hint" id="officeHint">(≥ 5,0 Std)</span></span>
+      </div>
+      <div class="goal" id="goalHome">
+        <span class="goal-mark">○</span>
+        <span>Homeoffice-Tag</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="pdfBtn" type="button">📄 Als PDF sichern</button>
+    <button class="btn secondary" id="resetBtn" type="button">↺ Zurücksetzen</button>
+  </div>
+
+  <div class="print-date" id="printDate"></div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Konfiguration (hier anpassen) ----
+  var CONFIG = {
+    MAX_HOURS: 6,            // oberes Ende jedes Schiebereglers
+    STEP: 0.5,               // Schrittweite in Stunden
+    LONG_DAY_THRESHOLD: 5,   // ab wie vielen Stunden ein Bürotag als "lang" zählt
+    DEFAULT_TARGET: 16       // Ziel-Wochenstunden
+  };
+
+  var DAYS = [
+    { key: "mo", label: "Montag",     short: "Mo", synergy: false },
+    { key: "di", label: "Dienstag",   short: "Di", synergy: false },
+    { key: "mi", label: "Mittwoch",   short: "Mi", synergy: false },
+    { key: "do", label: "Donnerstag", short: "Do", synergy: true  },
+    { key: "fr", label: "Freitag",    short: "Fr", synergy: true  }
+  ];
+
+  var ACCENT_OFFICE = "#5b9bff";
+  var ACCENT_HOME = "#c084fc";
+  var LS_KEY = "arbeitszeitplaner-state-v1";
+
+  // ---- State ----
+  function defaultState() {
+    var days = {};
+    DAYS.forEach(function (d) {
+      days[d.key] = { hours: 0, homeoffice: false };
+    });
+    return { target: CONFIG.DEFAULT_TARGET, days: days };
+  }
+
+  function encodeState(state) {
+    return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+  }
+
+  function decodeState(str) {
+    return JSON.parse(decodeURIComponent(escape(atob(str))));
+  }
+
+  function isValidState(s) {
+    if (!s || typeof s !== "object" || !s.days) return false;
+    return DAYS.every(function (d) {
+      var day = s.days[d.key];
+      return day && typeof day.hours === "number" && typeof day.homeoffice === "boolean";
+    });
+  }
+
+  function loadState() {
+    if (location.hash.indexOf("#s=") === 0) {
+      try {
+        var fromHash = decodeState(location.hash.slice(3));
+        if (isValidState(fromHash)) return fromHash;
+      } catch (e) { /* ignore, fall through */ }
+    }
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        var fromLs = JSON.parse(raw);
+        if (isValidState(fromLs)) return fromLs;
+      }
+    } catch (e) { /* ignore */ }
+    return defaultState();
+  }
+
+  function persist() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+    try { history.replaceState(null, "", "#s=" + encodeState(state)); } catch (e) {}
+  }
+
+  var state = loadState();
+
+  // ---- Helpers ----
+  function fmt(v) {
+    return v.toFixed(1).replace(".", ",");
+  }
+
+  function clampHours(v) {
+    var stepped = Math.round(v / CONFIG.STEP) * CONFIG.STEP;
+    return Math.min(CONFIG.MAX_HOURS, Math.max(0, stepped));
+  }
+
+  function weekTotal() {
+    return DAYS.reduce(function (sum, d) { return sum + state.days[d.key].hours; }, 0);
+  }
+
+  function checkLongOfficeDay() {
+    return DAYS.some(function (d) {
+      var day = state.days[d.key];
+      return !day.homeoffice && day.hours >= CONFIG.LONG_DAY_THRESHOLD;
+    });
+  }
+
+  function checkHomeofficeDay() {
+    return DAYS.some(function (d) {
+      var day = state.days[d.key];
+      return day.homeoffice && day.hours > 0;
+    });
+  }
+
+  // ---- DOM aufbauen ----
+  var grid = document.getElementById("weekGrid");
+  var els = {};
+
+  DAYS.forEach(function (d) {
+    var col = document.createElement("div");
+    col.className = "day-col";
+    col.dataset.day = d.key;
+
+    var ticks = [1, 2, 3, 4, 5].map(function (i) {
+      return '<div class="tick" style="bottom:' + (i / CONFIG.MAX_HOURS * 100) + '%"></div>';
+    }).join("");
+
+    col.innerHTML =
+      '<span class="badge-star" aria-hidden="true">⭐</span>' +
+      '<label class="ho-toggle">' +
+        '<input type="checkbox" class="ho-input" aria-label="' + d.label + ': Homeoffice">' +
+        '<span class="ho-icon" aria-hidden="true">🏢</span>' +
+      '</label>' +
+      '<div class="day-name">' + d.short + '</div>' +
+      '<div class="value-label">0,0 h</div>' +
+      '<div class="vslider" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="' + CONFIG.MAX_HOURS + '" aria-valuenow="0" aria-label="' + d.label + ': Arbeitsstunden">' +
+        '<div class="vslider-track">' + ticks +
+          '<div class="vslider-fill"></div>' +
+          '<div class="vslider-thumb"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="gemeinsam-label' + (d.synergy ? '' : ' hidden-slot') + '">Gemeinsam</div>';
+
+    grid.appendChild(col);
+
+    els[d.key] = {
+      col: col,
+      checkbox: col.querySelector(".ho-input"),
+      icon: col.querySelector(".ho-icon"),
+      dayName: col.querySelector(".day-name"),
+      valueLabel: col.querySelector(".value-label"),
+      slider: col.querySelector(".vslider"),
+      fill: col.querySelector(".vslider-fill"),
+      thumb: col.querySelector(".vslider-thumb"),
+      gemeinsam: col.querySelector(".gemeinsam-label")
+    };
+
+    // Checkbox
+    els[d.key].checkbox.addEventListener("change", function (e) {
+      state.days[d.key].homeoffice = e.target.checked;
+      render();
+      persist();
+    });
+
+    // Slider: Pointer Events (Maus + Touch + Stift)
+    var dragging = false;
+
+    function setFromClientY(clientY) {
+      var rect = els[d.key].slider.getBoundingClientRect();
+      var pct = (rect.bottom - clientY) / rect.height;
+      pct = Math.min(1, Math.max(0, pct));
+      state.days[d.key].hours = clampHours(pct * CONFIG.MAX_HOURS);
+      render();
+    }
+
+    els[d.key].slider.addEventListener("pointerdown", function (e) {
+      dragging = true;
+      try { els[d.key].slider.setPointerCapture(e.pointerId); } catch (err) {}
+      els[d.key].slider.focus();
+      setFromClientY(e.clientY);
+      e.preventDefault();
+    });
+
+    els[d.key].slider.addEventListener("pointermove", function (e) {
+      if (dragging) setFromClientY(e.clientY);
+    });
+
+    ["pointerup", "pointercancel"].forEach(function (evt) {
+      els[d.key].slider.addEventListener(evt, function () {
+        if (dragging) { dragging = false; persist(); }
+      });
+    });
+
+    els[d.key].slider.addEventListener("keydown", function (e) {
+      var h = state.days[d.key].hours;
+      if (e.key === "ArrowUp" || e.key === "ArrowRight") {
+        h = clampHours(h + CONFIG.STEP);
+      } else if (e.key === "ArrowDown" || e.key === "ArrowLeft") {
+        h = clampHours(h - CONFIG.STEP);
+      } else if (e.key === "Home") {
+        h = 0;
+      } else if (e.key === "End") {
+        h = CONFIG.MAX_HOURS;
+      } else {
+        return;
+      }
+      e.preventDefault();
+      state.days[d.key].hours = h;
+      render();
+      persist();
+    });
+  });
+
+  // ---- Ziel-Eingabe ----
+  var targetInput = document.getElementById("targetInput");
+  targetInput.value = state.target;
+  targetInput.addEventListener("change", function () {
+    var v = parseFloat(targetInput.value.replace(",", "."));
+    if (isNaN(v) || v < 0) v = CONFIG.DEFAULT_TARGET;
+    state.target = Math.round(v / CONFIG.STEP) * CONFIG.STEP;
+    targetInput.value = state.target;
+    render();
+    persist();
+  });
+
+  // ---- Aktionen ----
+  document.getElementById("pdfBtn").addEventListener("click", function () {
+    window.print();
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (confirm("Alle Werte für diese Woche zurücksetzen?")) {
+      state = defaultState();
+      targetInput.value = state.target;
+      render();
+      persist();
+    }
+  });
+
+  // ---- Render ----
+  var totalDisplay = document.getElementById("totalDisplay");
+  var targetDisplay = document.getElementById("targetDisplay");
+  var signalLamp = document.getElementById("signalLamp");
+  var goalOffice = document.getElementById("goalOffice");
+  var goalHome = document.getElementById("goalHome");
+  var officeHint = document.getElementById("officeHint");
+
+  officeHint.textContent = "(≥ " + fmt(CONFIG.LONG_DAY_THRESHOLD) + " Std)";
+
+  function render() {
+    DAYS.forEach(function (d) {
+      var day = state.days[d.key];
+      var e = els[d.key];
+      var color = day.homeoffice ? ACCENT_HOME : ACCENT_OFFICE;
+      var pct = (day.hours / CONFIG.MAX_HOURS) * 100;
+
+      e.col.style.setProperty("--day-color", color);
+      e.fill.style.height = pct + "%";
+      e.thumb.style.bottom = pct + "%";
+      e.slider.setAttribute("aria-valuenow", day.hours);
+      e.valueLabel.textContent = fmt(day.hours) + " h";
+      e.icon.textContent = day.homeoffice ? "🏠" : "🏢";
+      e.checkbox.checked = day.homeoffice;
+
+      if (d.synergy) {
+        e.gemeinsam.classList.toggle("active", day.homeoffice);
+      }
+
+      var qualifiesLong = !day.homeoffice && day.hours >= CONFIG.LONG_DAY_THRESHOLD;
+      e.col.classList.toggle("qualifies", qualifiesLong);
+    });
+
+    var total = weekTotal();
+    totalDisplay.textContent = fmt(total);
+    targetDisplay.textContent = fmt(state.target);
+
+    var lampState = "red";
+    if (Math.abs(total - state.target) < 0.001) lampState = "green";
+    else if (total > state.target) lampState = "amber";
+    signalLamp.setAttribute("data-state", lampState);
+
+    var longOffice = checkLongOfficeDay();
+    var homeDay = checkHomeofficeDay();
+    goalOffice.classList.toggle("met", longOffice);
+    goalOffice.querySelector(".goal-mark").textContent = longOffice ? "●" : "○";
+    goalHome.classList.toggle("met", homeDay);
+    goalHome.querySelector(".goal-mark").textContent = homeDay ? "●" : "○";
+  }
+
+  document.getElementById("printDate").textContent =
+    "Stand: " + new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+  render();
+})();
+</script>
+</body>
+</html>
