@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stirnholz-Rechner – End Grain Cutting Boards planen</title>
+<meta name="description" content="Plant Stirnholz-Schneidebretter: Raster, Muster aus mehreren Holzarten, Schnittliste je Arbeitsschritt, Verleimplan und Materialbedarf – mit Sägeblattstärke und Hobelabtrag.">
+<meta name="tool-icon" content="🪵">
+<link rel="stylesheet" href="../print.css" media="print">
+<style>
+:root{
+  --paper:#EEEFEA; --ink:#161C18; --ink2:#5B655E; --ink3:#8A938B;
+  --rule:#CBCEC6; --line:#DCDED7;
+  --bench:#232723; --bench2:#31362F;
+  --blue:#2F5673; --blue-l:#EAF0F5;
+  --warn:#7A5610; --warn-bg:#FBF3E0;
+  --err:#8A2E26; --err-bg:#F9EBE9;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--sans);-webkit-text-size-adjust:100%}
+.wrap{max-width:980px;margin:0 auto;padding:22px 16px 80px}
+h1{font-size:26px;line-height:1.15;letter-spacing:-.02em;margin:0 0 6px;font-weight:650}
+.lede{color:var(--ink2);margin:0 0 22px;max-width:58ch;font-size:14px}
+h2{display:flex;align-items:center;gap:12px;font-size:15px;font-weight:650;margin:34px 0 14px}
+h2::after{content:"";flex:1;height:1px;background:var(--rule)}
+h3{font-size:13px;font-weight:650;margin:18px 0 8px;color:var(--ink2)}
+p{margin:0 0 10px}
+a{color:var(--blue)}
+
+/* Hero / Vorschau */
+.bench{background:var(--bench);border-radius:5px;padding:14px 14px 12px;color:#E8EAE5}
+.bench svg{display:block;width:100%;height:auto;border-radius:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:12px 0 0;font-size:12px;color:#C3C8C0}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.stats{display:flex;flex-wrap:wrap;gap:2px 22px;margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.13);
+  font:12px/1.7 var(--mono);color:#B9BFB7}
+.stats b{color:#F2F4EF;font-weight:600}
+.hint{font-size:12px;color:#9AA298;margin:9px 0 0}
+
+/* Felder */
+.cols{display:grid;grid-template-columns:1fr;gap:0 34px}
+@media(min-width:760px){.cols{grid-template-columns:1fr 1fr}}
+.f{margin:0 0 15px}
+.fl{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.fl label{font-size:13px;color:var(--ink)}
+.fl .u{color:var(--ink3);font-size:12px}
+input[type=number],input[type=text]{font:600 13px var(--mono);padding:5px 7px;border:1px solid var(--rule);
+  border-radius:3px;background:#fff;color:var(--ink);width:88px;text-align:right}
+input[type=text]{text-align:left;font-family:var(--sans);font-weight:500;width:100%}
+input[type=range]{width:100%;margin:7px 0 0;accent-color:var(--blue)}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+select{font:500 13px var(--sans);padding:6px 8px;border:1px solid var(--rule);border-radius:3px;background:#fff;color:var(--ink);width:100%}
+.sub{font-size:12px;color:var(--ink3);margin-top:4px}
+
+details{border-top:1px solid var(--line);margin-top:8px}
+summary{cursor:pointer;padding:11px 0;font-size:13px;font-weight:600;color:var(--ink2)}
+summary::marker{color:var(--ink3)}
+.dbody{padding:4px 0 14px}
+
+/* Buttons */
+button{font:500 13px var(--sans);padding:7px 12px;border:1px solid var(--rule);background:#fff;
+  color:var(--ink);border-radius:3px;cursor:pointer}
+button:hover{border-color:var(--ink2)}
+button.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+button.sm{padding:4px 9px;font-size:12px}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+
+/* Holzarten */
+.wood{display:grid;grid-template-columns:26px 1fr 34px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.wood .dims{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.wood .dims label{display:block;font-size:11px;color:var(--ink3);margin-bottom:2px}
+.wood .dims input{width:100%}
+input[type=color]{width:26px;height:26px;padding:0;border:1px solid var(--rule);border-radius:3px;background:#fff}
+.tag{font:600 11px var(--mono);color:var(--ink3)}
+
+/* Muster-Editor */
+.rowmap{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.rowmap button{padding:3px 7px;font:600 11px var(--mono);min-width:52px}
+.rowmap button.fl{background:var(--blue-l);border-color:#B7C8D5}
+
+/* Panels */
+.panelbox{border:1px solid var(--line);border-radius:4px;padding:11px 12px;margin:0 0 12px;background:#fff}
+.panelbox svg{display:block;width:100%;height:auto;margin-top:8px}
+.pt{font:650 12px var(--sans);display:flex;justify-content:space-between;gap:10px}
+.pt span{font-family:var(--mono);font-weight:500;color:var(--ink2)}
+
+/* Tabellen */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:0 0 6px}
+th{text-align:left;font-weight:650;padding:7px 8px 6px;border-bottom:1.5px solid var(--ink);white-space:nowrap;font-size:12px}
+td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{font-family:var(--mono);text-align:right;white-space:nowrap}
+tfoot td{font-weight:650;border-bottom:none}
+caption{caption-side:top;text-align:left;font-size:12px;color:var(--ink2);padding:0 0 7px}
+
+/* Anleitung */
+ol.steps{counter-reset:st;list-style:none;margin:0;padding:0}
+ol.steps>li{counter-increment:st;position:relative;padding:0 0 16px 40px;margin:0 0 16px;border-bottom:1px solid var(--line)}
+ol.steps>li:last-child{border-bottom:none}
+ol.steps>li::before{content:counter(st);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;
+  background:var(--ink);color:var(--paper);font:650 12px var(--mono);display:flex;align-items:center;justify-content:center}
+ol.steps h4{margin:2px 0 5px;font-size:14px;font-weight:650}
+ol.steps p{font-size:13.5px;color:var(--ink2);margin:0 0 6px}
+ol.steps .spec{font:12.5px/1.7 var(--mono);color:var(--ink);background:#fff;border-left:2px solid var(--rule);padding:7px 11px;margin:7px 0 0}
+
+.note{border-left:3px solid var(--rule);padding:9px 12px;margin:10px 0;font-size:13px;background:#fff}
+.note.warn{border-color:#C79A2E;background:var(--warn-bg);color:var(--warn)}
+.note.err{border-color:var(--err);background:var(--err-bg);color:var(--err)}
+.note b{font-weight:650}
+
+footer{margin-top:44px;padding-top:14px;border-top:1px solid var(--rule);font-size:12px;color:var(--ink3);
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between}
+.stamp{display:none}
+
+@media print{
+  body{background:#fff}
+  .wrap{max-width:none;padding:0}
+  .noprint{display:none!important}
+  .stamp{display:block;font:11px var(--mono);color:#555;margin-bottom:10px}
+  .bench{background:#fff;color:#000;padding:0;border:1px solid #999}
+  .legend,.stats{color:#000}
+  .stats{border-top-color:#bbb}
+  .stats b{color:#000}
+  h2{margin-top:18px}
+  table,ol.steps>li,.panelbox{page-break-inside:avoid}
+  .note{border:1px solid #999;background:#fff;color:#000}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="stamp" id="stamp"></div>
+
+<h1>Stirnholz-Rechner</h1>
+<p class="lede">Plant End-Grain-Schneidebretter vom Rohbrett bis zum Öl: Raster, Muster, Schnittliste je Arbeitsschritt, Verleimplan und Materialbedarf — inklusive Sägeblattstärke, Hobelabtrag und Besäumzugaben.</p>
+
+<div class="bench">
+  <div id="preview"></div>
+  <div class="legend" id="legend"></div>
+  <div class="stats" id="stats"></div>
+  <p class="hint noprint" id="editHint">Tippe auf ein Feld, um seine Holzart zu ändern. Da alle Scheiben aus demselben Panel stammen, ändert sich dabei die ganze Spalte aller Reihen mit demselben Panel-Typ.</p>
+</div>
+
+<div id="msgs"></div>
+
+<h2 class="noprint">Maße &amp; Raster</h2>
+<div class="noprint">
+  <div class="cols">
+    <div id="fields-ziel"></div>
+    <div id="fields-raster"></div>
+  </div>
+  <div class="btnrow">
+    <button type="button" id="btnFit">Raster aus Zielmaß</button>
+    <button type="button" id="btnSquare">Quadratische Felder</button>
+  </div>
+  <p class="sub" id="derived"></p>
+</div>
+
+<h2 class="noprint">Holzarten</h2>
+<div class="noprint">
+  <div id="woods"></div>
+  <div class="btnrow"><button type="button" id="btnAddWood">Holzart hinzufügen</button></div>
+  <p class="sub">Die Reihenhöhe ergibt sich aus dem dünnsten verwendeten Rohbrett — alle Streifen müssen nach dem Dicken exakt gleich stark sein.</p>
+</div>
+
+<h2 class="noprint">Muster</h2>
+<div class="noprint">
+  <div class="cols">
+    <div>
+      <div class="f"><div class="fl"><label for="pattern">Vorlage</label></div>
+        <select id="pattern">
+          <option value="uni">Einfarbig</option>
+          <option value="streifen">Streifen</option>
+          <option value="schach">Schachbrett</option>
+          <option value="versatz">Versatz / Diagonale</option>
+          <option value="rahmen">Rahmen</option>
+          <option value="zufall">Zufall</option>
+          <option value="frei">Frei bearbeitet</option>
+        </select>
+      </div>
+      <div class="btnrow"><button type="button" id="btnShuffle" class="sm">Neu würfeln</button></div>
+    </div>
+    <div id="fields-muster"></div>
+  </div>
+  <h3>Reihen und Panel-Zuordnung</h3>
+  <p class="sub">R = Reihe im fertigen Brett, A/B/C = Panel-Typ. Tippen wechselt den Panel-Typ, langes Antippen dreht die Scheibe um 180° (↔).</p>
+  <div class="rowmap" id="rowmap"></div>
+</div>
+
+<details class="noprint" id="detParams">
+  <summary>Maschinen, Sägeblatt und Zugaben</summary>
+  <div class="dbody">
+    <div class="cols">
+      <div id="fields-proz"></div>
+      <div id="fields-zug"></div>
+    </div>
+  </div>
+</details>
+
+<h2>Panels und Scheiben</h2>
+<div id="panels"></div>
+
+<h2>Schnittliste je Arbeitsschritt</h2>
+<div id="cutlists"></div>
+
+<h2>Anleitung</h2>
+<ol class="steps" id="guide"></ol>
+
+<h2>Materialliste</h2>
+<div id="material"></div>
+
+<footer>
+  <div class="btnrow noprint" style="margin:0">
+    <button type="button" class="pri" id="btnPdf">Als PDF sichern</button>
+    <button type="button" id="btnLink">Link kopieren</button>
+    <button type="button" id="btnReset">Zurücksetzen</button>
+  </div>
+  <div id="foot"></div>
+</footer>
+
+</div>
+
+<script>
+"use strict";
+/* ---------------------------------------------------------------- Modell */
+const WOODS = [
+  {name:"Ahorn",      color:"#DFC28C", dens:0.63},
+  {name:"Nussbaum",   color:"#5C4130", dens:0.65},
+  {name:"Kirsche",    color:"#B0714A", dens:0.58},
+  {name:"Eiche",      color:"#C4A272", dens:0.71},
+  {name:"Esche",      color:"#E0CDA9", dens:0.69},
+  {name:"Buche",      color:"#CFA983", dens:0.72},
+  {name:"Zwetschge",  color:"#7A4A46", dens:0.80},
+  {name:"Robinie",    color:"#A38A42", dens:0.77}
+];
+const defState = () => ({
+  Lf:400, Wf:300, Tf:40, w:28, n:15, m:11,
+  kerf:3.2, hobel1:4, hobel2:2, hobel3:3, fuege:0,
+  kappPanel:25, kappRoh:20, besaeum:5, trimL:12, trimW:12,
+  verfahren:"sled", leimG:250,
+  species:[
+    {name:"Ahorn",    color:"#DFC28C", dens:0.63, rawT:34, rawW:150, rawL:2000},
+    {name:"Nussbaum", color:"#5C4130", dens:0.65, rawT:34, rawW:120, rawL:2000}
+  ],
+  pattern:"schach", zPanels:3,
+  panels:[[0]], rowMap:[0], rowFlip:[false]
+});
+let S = defState();
+
+const FIELDS = {
+  Lf:{l:"Ziel-Fertiglänge",min:150,max:900,step:5,u:"mm"},
+  Wf:{l:"Ziel-Fertigbreite",min:100,max:600,step:5,u:"mm"},
+  Tf:{l:"Fertigstärke",min:18,max:80,step:1,u:"mm"},
+  w:{l:"Spaltenbreite (Streifenbreite)",min:8,max:70,step:1,u:"mm"},
+  n:{l:"Spalten (Streifen je Panel)",min:2,max:44,step:1,u:"Stk"},
+  m:{l:"Reihen (Scheiben gesamt)",min:2,max:44,step:1,u:"Stk"},
+  kerf:{l:"Sägeblattstärke",min:0.6,max:6,step:0.1,u:"mm"},
+  hobel1:{l:"Abtrag Rohbrett abrichten + dicken",min:0,max:12,step:0.5,u:"mm ges."},
+  hobel2:{l:"Abtrag Panel kalibrieren",min:0,max:8,step:0.5,u:"mm ges."},
+  hobel3:{l:"Abtrag Brett kalibrieren (Stirnholz)",min:0,max:12,step:0.5,u:"mm ges."},
+  fuege:{l:"Fügezugabe je Streifenbreite",min:0,max:3,step:0.1,u:"mm"},
+  kappPanel:{l:"Kappzugabe Panellänge",min:0,max:120,step:5,u:"mm"},
+  kappRoh:{l:"Kappzugabe Rohbrett je Ende",min:0,max:80,step:5,u:"mm"},
+  besaeum:{l:"Besäumung Rohbrett je Kante",min:0,max:25,step:1,u:"mm"},
+  trimL:{l:"Besäumzugabe Länge",min:0,max:60,step:2,u:"mm ges."},
+  trimW:{l:"Besäumzugabe Breite",min:0,max:60,step:2,u:"mm ges."},
+  zPanels:{l:"Anzahl Panel-Typen",min:1,max:5,step:1,u:"Stk"}
+};
+const PL = "ABCDE";
+
+/* ------------------------------------------------------------- Hilfsmittel */
+const nf = (v,d=1)=> (isFinite(v)?v:0).toLocaleString("de-DE",{minimumFractionDigits:d,maximumFractionDigits:d});
+const ni = v => Math.round(isFinite(v)?v:0).toLocaleString("de-DE");
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const clamp = (v,a,b)=> Math.min(b,Math.max(a,v));
+function rnd(seed){ let a=(seed*1664525+1013904223)>>>0; a^=a>>>15; return ((a*2246822519)>>>0)/4294967296; }
+
+/* ---------------------------------------------------------------- Muster */
+function buildPattern(){
+  const ns=S.species.length, n=S.n, m=S.m, ix=k=>((k%ns)+ns)%ns;
+  const seq=(off)=>Array.from({length:n},(_,j)=>ix(j+off));
+  let P=[], map=[], fl=[];
+  switch(S.pattern){
+    case "uni":
+      P=[Array(n).fill(0)]; map=Array(m).fill(0); fl=Array(m).fill(false); break;
+    case "streifen":
+      P=[seq(0)]; map=Array(m).fill(0); fl=Array(m).fill(false); break;
+    case "schach":
+      if(n%2===0){ P=[seq(0)]; map=Array(m).fill(0); fl=Array.from({length:m},(_,i)=>i%2===1); }
+      else { P=[seq(0),seq(1)]; map=Array.from({length:m},(_,i)=>i%2); fl=Array(m).fill(false); }
+      break;
+    case "versatz":{
+      const k=Math.max(2,ns);
+      P=Array.from({length:k},(_,p)=>seq(p));
+      map=Array.from({length:m},(_,i)=>i%k); fl=Array(m).fill(false); break;
+    }
+    case "rahmen":{
+      const b=ix(1), a=0;
+      P=[Array(n).fill(b), Array.from({length:n},(_,j)=>(j===0||j===n-1)?b:a)];
+      map=Array.from({length:m},(_,i)=>(i===0||i===m-1)?0:1); fl=Array(m).fill(false); break;
+    }
+    case "zufall":{
+      const k=clamp(S.zPanels,1,5);
+      P=Array.from({length:k},(_,p)=>Array.from({length:n},(_,j)=>Math.floor(rnd(p*977+j*131+Date.now()%9973)*ns)));
+      map=Array.from({length:m},(_,i)=>i%k); fl=Array(m).fill(false); break;
+    }
+    default:{ /* frei: bestehende Struktur anpassen */
+      P=(S.panels.length?S.panels:[Array(n).fill(0)]).map(row=>{
+        const r=row.slice(0,n); while(r.length<n) r.push(r.length?r[r.length-1]:0);
+        return r.map(v=>clamp(v,0,ns-1));
+      });
+      map=Array.from({length:m},(_,i)=> clamp(S.rowMap[i]!==undefined?S.rowMap[i]:i%P.length,0,P.length-1));
+      fl=Array.from({length:m},(_,i)=> !!S.rowFlip[i]);
+    }
+  }
+  S.panels=P; S.rowMap=map; S.rowFlip=fl;
+}
+const rowSeq = i => { const p=S.panels[S.rowMap[i]]||[]; return S.rowFlip[i] ? p.slice().reverse() : p.slice(); };
+
+/* -------------------------------------------------------------- Rechnung */
+function packStrips(pieces, usable, kerf){
+  const bins=[];
+  [...pieces].sort((a,b)=>b-a).forEach(len=>{
+    let b=bins.find(x=>x.rem>=len+kerf);
+    if(!b){ b={rem:usable,items:[]}; bins.push(b); }
+    b.rem-=len+kerf; b.items.push(len);
+  });
+  return bins;
+}
+function compute(){
+  const err=[], warn=[];
+  const usedSet=new Set(); S.panels.forEach((p,pi)=>{ if(S.rowMap.includes(pi)) p.forEach(i=>usedSet.add(i)); });
+  const used=[...usedSet].sort((a,b)=>a-b);
+  const rawTs=used.map(i=>S.species[i].rawT);
+  const limIdx=used[rawTs.indexOf(Math.min(...rawTs))];
+  const t1=Math.min(...rawTs)-S.hobel1;
+  const t=t1-S.hobel2;
+  const s=S.Tf+S.hobel3;
+  const wCut=S.w+S.fuege;
+  if(t<=0) err.push("Die Rohbretter sind zu dünn: nach Abrichten und Kalibrieren bleibt keine Reihenhöhe übrig. Dickere Bretter wählen oder Abtrag reduzieren.");
+
+  const Lb=S.n*S.w, Wb=S.m*t;
+  const Lf=Lb-S.trimL, Wf=Wb-S.trimW;
+
+  const cnt=S.panels.map((_,p)=>S.rowMap.filter(x=>x===p).length);
+  const pLen=cnt.map(c=> c>0 ? c*(s+S.kerf)+S.kappPanel : 0);
+
+  // Streifenbedarf je Holzart
+  const need=S.species.map(()=>({map:new Map(),total:0,cells:0}));
+  S.panels.forEach((cols,p)=>{ if(!cnt[p]) return;
+    cols.forEach(si=>{ const L=pLen[p]; const e=need[si]; e.map.set(L,(e.map.get(L)||0)+1); e.total+=L; });
+  });
+  S.rowMap.forEach((p,i)=> rowSeq(i).forEach(si=> need[si].cells++));
+
+  const mat=S.species.map((sp,i)=>{
+    const e=need[i];
+    const pieces=[]; e.map.forEach((c,L)=>{ for(let k=0;k<c;k++) pieces.push(L); });
+    const usable=sp.rawL-2*S.kappRoh;
+    const across=Math.floor((sp.rawW-2*S.besaeum+S.kerf)/(wCut+S.kerf));
+    let bins=[], boards=0, tooShort=false;
+    if(pieces.length){
+      if(Math.max(...pieces)+S.kerf>usable) tooShort=true;
+      else bins=packStrips(pieces,usable,S.kerf);
+      boards= across>0 ? Math.ceil(bins.length/across) : 0;
+      if(across<=0) warn.push(sp.name+": aus der Rohbrettbreite lässt sich kein einziger Streifen von "+nf(wCut)+" mm gewinnen.");
+      if(tooShort) err.push(sp.name+": das Rohbrett ist zu kurz für die längste Panelplatte ("+ni(Math.max(...pieces))+" mm).");
+    }
+    return {sp,pieces:[...e.map.entries()].sort((a,b)=>b[0]-a[0]),count:pieces.length,total:e.total,
+      cells:e.cells,longStrips:bins.length,across:Math.max(0,across),boards,usable,tooShort};
+  });
+
+  // Leim, Gewicht, Öl, Ausbeute
+  const g1=S.panels.reduce((a,_,p)=> a + (cnt[p] ? (S.n-1)*t1*pLen[p] : 0),0)/1e6*S.leimG;
+  const g2=(S.m-1)*s*Lb/1e6*S.leimG;
+  const totalCells=S.n*S.m;
+  const dens=S.species.reduce((a,sp,i)=>a+sp.dens*(need[i].cells/(totalCells||1)),0);
+  const volFert=Lf*Wf*S.Tf/1e6; // cm³
+  const weight=volFert/1000*dens; // kg
+  const surf=2*(Lf*Wf+Lf*S.Tf+Wf*S.Tf)/1e6; // m²
+  const oil=surf*60*2;
+  const volRaw=mat.reduce((a,x)=>a+x.boards*x.sp.rawT*x.sp.rawW*x.sp.rawL/1e6,0);
+  const yieldPct= volRaw>0 ? volFert/volRaw*100 : 0;
+
+  if(S.verfahren==="hobel") warn.push("Stirnholz gehört nicht in den Dickenhobel — Ausrisse und Rückschlaggefahr. Router-Sled oder Breitbandschleifer wählen.");
+  if(Math.abs(S.w-t)>1.5 && (S.pattern==="schach"||S.pattern==="versatz"))
+    warn.push("Die Felder werden "+nf(S.w)+" × "+nf(t)+" mm, also nicht quadratisch. Über „Quadratische Felder“ die Spaltenbreite an die Reihenhöhe angleichen.");
+  if(S.Tf<25) warn.push("Unter 25 mm Fertigstärke arbeitet ein Stirnholzbrett stark und neigt zum Schüsseln. 30–45 mm sind üblich.");
+  if(s>=t1) warn.push("Die Scheibenbreite ("+nf(s)+" mm) ist größer als die Paneldicke ("+nf(t1)+" mm) — beim Kappen unbedingt Schiebeschlitten und Niederhalter verwenden, die Scheiben kippen sonst.");
+  if(used.length===1 && S.species.length>1) warn.push("Im aktuellen Muster kommt nur eine Holzart vor.");
+
+  return {err,warn,t1,t,s,wCut,Lb,Wb,Lf,Wf,cnt,pLen,mat,g1,g2,weight,oil,yieldPct,volFert,volRaw,limIdx,used,dens};
+}
+
+/* -------------------------------------------------------------- Vorschau */
+function svgBoard(R){
+  const n=S.n,m=S.m,w=S.w,t=R.t;
+  const pad=34, W=n*w, H=m*t, sc=Math.min(1,(760-2*pad)/W);
+  const vw=W*sc+2*pad, vh=H*sc+2*pad;
+  let o=`<svg viewBox="0 0 ${vw.toFixed(1)} ${vh.toFixed(1)}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Draufsicht des Bretts">`;
+  o+=`<rect x="0" y="0" width="${vw}" height="${vh}" fill="none"/>`;
+  for(let i=0;i<m;i++){
+    const seq=rowSeq(i);
+    for(let j=0;j<n;j++){
+      const sp=S.species[clamp(seq[j],0,S.species.length-1)]||S.species[0];
+      const x=pad+j*w*sc, y=pad+i*t*sc, cw=w*sc, ch=t*sc;
+      o+=`<rect class="cell" data-i="${i}" data-j="${j}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${cw.toFixed(2)}" height="${ch.toFixed(2)}" fill="${sp.color}"/>`;
+      const r=rnd(i*313+j*77), vert=r>0.5, lines=3;
+      for(let k=1;k<=lines;k++){
+        const f=k/(lines+1), jit=(rnd(i*91+j*37+k*13)-0.5)*0.14;
+        if(vert){ const xx=x+cw*(f+jit);
+          o+=`<path d="M${xx.toFixed(2)} ${(y+1).toFixed(2)} Q${(xx+cw*0.07).toFixed(2)} ${(y+ch/2).toFixed(2)} ${xx.toFixed(2)} ${(y+ch-1).toFixed(2)}" fill="none" stroke="rgba(0,0,0,.17)" stroke-width="${Math.max(.5,cw*0.035).toFixed(2)}"/>`;
+        } else { const yy=y+ch*(f+jit);
+          o+=`<path d="M${(x+1).toFixed(2)} ${yy.toFixed(2)} Q${(x+cw/2).toFixed(2)} ${(yy+ch*0.07).toFixed(2)} ${(x+cw-1).toFixed(2)} ${yy.toFixed(2)}" fill="none" stroke="rgba(0,0,0,.17)" stroke-width="${Math.max(.5,ch*0.035).toFixed(2)}"/>`;
+        }
+      }
+      o+=`<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${cw.toFixed(2)}" height="${ch.toFixed(2)}" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="0.6"/>`;
+    }
+  }
+  o+=`<rect x="${pad}" y="${pad}" width="${(W*sc).toFixed(2)}" height="${(H*sc).toFixed(2)}" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1"/>`;
+  const ix=pad+S.trimL/2*sc, iy=pad+S.trimW/2*sc, iw=(W-S.trimL)*sc, ih=(H-S.trimW)*sc;
+  if(iw>0&&ih>0) o+=`<rect x="${ix.toFixed(2)}" y="${iy.toFixed(2)}" width="${iw.toFixed(2)}" height="${ih.toFixed(2)}" fill="none" stroke="#8FD0F0" stroke-width="1.2" stroke-dasharray="5 4"/>`;
+  const F=`font-family:ui-monospace,Menlo,monospace;font-size:11px;fill:#B9BFB7`;
+  o+=`<text x="${(pad+W*sc/2).toFixed(1)}" y="${(pad-13).toFixed(1)}" text-anchor="middle" style="${F}">${ni(R.Lf)} mm fertig · ${ni(R.Lb)} roh</text>`;
+  o+=`<text x="${(pad-11).toFixed(1)}" y="${(pad+H*sc/2).toFixed(1)}" text-anchor="middle" transform="rotate(-90 ${(pad-11).toFixed(1)} ${(pad+H*sc/2).toFixed(1)})" style="${F}">${ni(R.Wf)} mm fertig · ${ni(R.Wb)} roh</text>`;
+  for(let i=0;i<m;i++){
+    o+=`<text x="${(pad+W*sc+8).toFixed(1)}" y="${(pad+(i+0.5)*t*sc+3.5).toFixed(1)}" style="${F};font-size:9px">${PL[S.rowMap[i]]||"?"}${S.rowFlip[i]?"↔":""}</text>`;
+  }
+  return o+`</svg>`;
+}
+function svgPanel(p,R){
+  const cols=S.panels[p], n=S.n, len=R.pLen[p], wid=n*S.w;
+  const pad=22, sc=Math.min(1,(700-2*pad)/Math.max(len,1)), sc2=Math.min(sc,(150)/Math.max(wid,1));
+  const vw=len*sc+2*pad, vh=wid*sc2+2*pad;
+  let o=`<svg viewBox="0 0 ${vw.toFixed(1)} ${vh.toFixed(1)}" xmlns="http://www.w3.org/2000/svg">`;
+  cols.forEach((si,j)=>{
+    const sp=S.species[clamp(si,0,S.species.length-1)]||S.species[0];
+    o+=`<rect x="${pad}" y="${(pad+j*S.w*sc2).toFixed(2)}" width="${(len*sc).toFixed(2)}" height="${(S.w*sc2).toFixed(2)}" fill="${sp.color}" stroke="rgba(0,0,0,.3)" stroke-width="0.5"/>`;
+  });
+  let x=S.kappPanel;
+  for(let k=0;k<R.cnt[p];k++){
+    const x1=pad+x*sc;
+    o+=`<line x1="${x1.toFixed(2)}" y1="${pad}" x2="${x1.toFixed(2)}" y2="${(pad+wid*sc2).toFixed(2)}" stroke="#1B4D6B" stroke-width="1" stroke-dasharray="3 3"/>`;
+    x+=S.s_dummy||0; x+=(R.s+S.kerf);
+  }
+  o+=`<rect x="${pad}" y="${pad}" width="${(len*sc).toFixed(2)}" height="${(wid*sc2).toFixed(2)}" fill="none" stroke="#333" stroke-width="1"/>`;
+  o+=`<text x="${pad}" y="${(pad-7).toFixed(1)}" style="font-family:ui-monospace,Menlo,monospace;font-size:10px;fill:#5B655E">${ni(len)} × ${ni(wid)} × ${nf(R.t1)} mm · ${R.cnt[p]} Scheiben à ${nf(R.s)} mm</text>`;
+  return o+`</svg>`;
+}
+
+/* --------------------------------------------------------------- Ausgabe */
+function render(){
+  buildPattern();
+  const R=compute();
+
+  document.getElementById("preview").innerHTML=svgBoard(R);
+  document.getElementById("legend").innerHTML=S.species.map((sp,i)=>
+    `<span><i class="sw" style="background:${sp.color}"></i>${esc(sp.name)}${R.mat[i].cells?" · "+R.mat[i].cells+" Felder":" · unbenutzt"}</span>`).join("");
+  document.getElementById("stats").innerHTML=[
+    ["Fertigmaß", `${ni(R.Lf)} × ${ni(R.Wf)} × ${ni(S.Tf)} mm`],
+    ["Raster", `${S.n} × ${S.m} Felder à ${nf(S.w)} × ${nf(R.t)} mm`],
+    ["Scheibenbreite", `${nf(R.s)} mm`],
+    ["Panels", `${R.cnt.filter(c=>c>0).length} Typ(en), ${S.m} Scheiben`],
+    ["Gewicht ca.", `${nf(R.weight,2)} kg`],
+    ["Ausbeute", `${nf(R.yieldPct,0)} %`]
+  ].map(([k,v])=>`<span>${k} <b>${v}</b></span>`).join("");
+
+  document.getElementById("msgs").innerHTML =
+    R.err.map(t=>`<div class="note err"><b>Das lässt sich so nicht bauen.</b> ${esc(t)}</div>`).join("")+
+    R.warn.map(t=>`<div class="note warn">${esc(t)}</div>`).join("");
+
+  document.getElementById("derived").innerHTML =
+    `Gehobelte Rohstärke t1 = <b>${nf(R.t1)} mm</b> (aus ${esc(S.species[R.limIdx]?S.species[R.limIdx].name:"–")}, ${nf(S.species[R.limIdx]?S.species[R.limIdx].rawT:0)} mm − ${nf(S.hobel1)} mm) · `+
+    `Reihenhöhe t = <b>${nf(R.t)} mm</b> · Scheibenbreite s = <b>${nf(R.s)} mm</b> · `+
+    `Rohmaß Verleimung 2: ${ni(R.Lb)} × ${ni(R.Wb)} mm · Abweichung zum Ziel: ${(R.Lf-S.Lf>=0?"+":"")}${ni(R.Lf-S.Lf)} / ${(R.Wf-S.Wf>=0?"+":"")}${ni(R.Wf-S.Wf)} mm`;
+
+  renderRowmap();
+  renderPanels(R);
+  renderCutlists(R);
+  renderGuide(R);
+  renderMaterial(R);
+  saveState();
+}
+
+function renderRowmap(){
+  const h=document.getElementById("rowmap");
+  h.innerHTML=S.rowMap.map((p,i)=>
+    `<button type="button" class="${S.rowFlip[i]?"fl":""}" data-row="${i}">R${i+1} ${PL[p]||"?"}${S.rowFlip[i]?" ↔":""}</button>`).join("");
+}
+function renderPanels(R){
+  const h=document.getElementById("panels");
+  h.innerHTML=S.panels.map((cols,p)=>{
+    if(!R.cnt[p]) return "";
+    const rows=S.rowMap.map((x,i)=>x===p?("R"+(i+1)+(S.rowFlip[i]?"↔":"")):null).filter(Boolean).join(", ");
+    return `<div class="panelbox"><div class="pt"><span style="font-weight:650;color:var(--ink)">Panel ${PL[p]}</span>`+
+      `<span>${R.cnt[p]} Scheiben → ${rows}</span></div>`+
+      `<div class="sub">Streifenfolge: ${cols.map(si=>esc(S.species[si]?S.species[si].name:"?")).join(" · ")}</div>`+
+      svgPanel(p,R)+`</div>`;
+  }).join("") || `<p class="sub">Kein Panel in Verwendung.</p>`;
+}
+
+function renderCutlists(R){
+  let o="";
+  // Schritt 1
+  o+=`<h3>Schritt 1 — Rohholz auf Stärke bringen</h3><div class="tw"><table><caption>Alle Teile auf exakt t1 = ${nf(R.t1)} mm dicken. Ungleiche Stärken zerstören später die Fugen.</caption>`+
+    `<thead><tr><th>Holzart</th><th class="n">Rohstärke</th><th class="n">→ gehobelt t1</th><th class="n">Rohbretter</th></tr></thead><tbody>`+
+    R.mat.map(x=> x.count?`<tr><td>${esc(x.sp.name)}</td><td class="n">${nf(x.sp.rawT)}</td><td class="n">${nf(R.t1)}</td><td class="n">${x.boards} × ${ni(x.sp.rawL)}×${ni(x.sp.rawW)} mm</td></tr>`:"").join("")+
+    `</tbody></table></div>`;
+  // Schritt 2
+  o+=`<h3>Schritt 2 — Streifen zuschneiden</h3><div class="tw"><table><caption>Streifenbreite ${nf(R.wCut)} mm (${nf(S.w)} mm fertig + ${nf(S.fuege)} mm Fügezugabe), Sägeblatt ${nf(S.kerf)} mm.</caption>`+
+    `<thead><tr><th>Holzart</th><th class="n">Anzahl</th><th class="n">Länge</th><th class="n">Breite</th><th class="n">Dicke</th><th>für</th></tr></thead><tbody>`;
+  R.mat.forEach(x=> x.pieces.forEach(([L,c])=>{
+    const forP=S.panels.map((cols,p)=> (R.cnt[p] && R.pLen[p]===L && cols.some((si,j)=>S.species[si]===x.sp)) ? "Panel "+PL[p] : null).filter(Boolean).join(", ");
+    o+=`<tr><td>${esc(x.sp.name)}</td><td class="n">${c}</td><td class="n">${ni(L)}</td><td class="n">${nf(R.wCut)}</td><td class="n">${nf(R.t1)}</td><td>${forP||"–"}</td></tr>`;
+  }));
+  o+=`</tbody></table></div>`;
+  // Schritt 3
+  o+=`<h3>Schritt 3 — Panels verleimen und kalibrieren</h3><div class="tw"><table>`+
+    `<thead><tr><th>Panel</th><th class="n">Streifen</th><th class="n">Länge</th><th class="n">Breite</th><th class="n">Dicke roh → fertig</th><th class="n">Leim</th></tr></thead><tbody>`+
+    S.panels.map((cols,p)=> R.cnt[p]?`<tr><td>${PL[p]}</td><td class="n">${S.n}</td><td class="n">${ni(R.pLen[p])}</td><td class="n">${ni(S.n*S.w)}</td>`+
+      `<td class="n">${nf(R.t1)} → ${nf(R.t)}</td><td class="n">${ni((S.n-1)*R.t1*R.pLen[p]/1e6*S.leimG)} g</td></tr>`:"").join("")+
+    `</tbody></table></div>`;
+  // Schritt 4
+  o+=`<h3>Schritt 4 — Scheiben kappen</h3><div class="tw"><table><caption>Schnittbreite ${nf(R.s)} mm = ${nf(S.Tf)} mm Fertigstärke + ${nf(S.hobel3)} mm Kalibrierabtrag. Je Schnitt gehen ${nf(S.kerf)} mm verloren.</caption>`+
+    `<thead><tr><th>Panel</th><th class="n">Scheiben</th><th class="n">Breite</th><th class="n">Länge</th><th class="n">Höhe</th><th>Reihen</th></tr></thead><tbody>`+
+    S.panels.map((cols,p)=>{ if(!R.cnt[p]) return "";
+      const rows=S.rowMap.map((x,i)=>x===p?("R"+(i+1)+(S.rowFlip[i]?"↔":"")):null).filter(Boolean).join(", ");
+      return `<tr><td>${PL[p]}</td><td class="n">${R.cnt[p]}</td><td class="n">${nf(R.s)}</td><td class="n">${ni(S.n*S.w)}</td><td class="n">${nf(R.t)}</td><td>${rows}</td></tr>`;
+    }).join("")+`</tbody></table></div>`;
+  // Schritt 5
+  o+=`<h3>Schritt 5 — Legeplan Verleimung 2</h3><div class="tw"><table>`+
+    `<thead><tr><th>Reihe</th><th>Panel</th><th>Ausrichtung</th><th>Holzfolge</th></tr></thead><tbody>`+
+    S.rowMap.map((p,i)=>`<tr><td>R${i+1}</td><td>${PL[p]}</td><td>${S.rowFlip[i]?"um 180° gedreht":"wie gesägt"}</td>`+
+      `<td>${rowSeq(i).map(si=>esc((S.species[si]||{name:"?"}).name.slice(0,2))).join("·")}</td></tr>`).join("")+
+    `</tbody></table></div>`;
+  document.getElementById("cutlists").innerHTML=o;
+}
+
+function renderGuide(R){
+  const verf={hobel:"Dickenhobel",sled:"Router-Sled",schleif:"Breitband- oder Zylinderschleifer"}[S.verfahren];
+  const clamps=L=>Math.max(3,Math.ceil(L/150)+1);
+  const steps=[
+    ["Rohholz abrichten und dicken",
+     `Alle Bretter fläche und Kante abrichten, dann auf gleiche Stärke dicken. Diese Stärke bestimmt später die Reihenhöhe des Musters.`,
+     `Zielstärke t1 = ${nf(R.t1)} mm\nAbtrag gesamt ${nf(S.hobel1)} mm ab ${nf(Math.min(...R.used.map(i=>S.species[i].rawT)))} mm Rohstärke\nToleranz max. ±0,1 mm über alle Teile`],
+    ["Auf Länge kappen",
+     `Jedes Panel bekommt genau so viel Länge, wie seine Scheiben plus Schnittfugen brauchen.`,
+     S.panels.map((c,p)=>R.cnt[p]?`Panel ${PL[p]}: ${ni(R.pLen[p])} mm  (${R.cnt[p]} × ${nf(R.s)} mm + ${R.cnt[p]} × ${nf(S.kerf)} mm Fuge + ${nf(S.kappPanel)} mm Zugabe)`:"").filter(Boolean).join("\n")],
+    ["Streifen auftrennen",
+     `Streifen mit Parallelanschlag auftrennen, danach die Leimflächen fügen. Immer in der gleichen Orientierung arbeiten, damit die Fugen sauber schließen.`,
+     `Breite ${nf(R.wCut)} mm · Sägeblatt ${nf(S.kerf)} mm\nGesamt ${R.mat.reduce((a,x)=>a+x.count,0)} Streifen`],
+    ["Verleimung 1 — Panels",
+     `Streifen in der vorgegebenen Reihenfolge auflegen, Leim vollflächig auf eine Seite, gleichmäßig verzwingen und wechselseitig von oben und unten spannen, damit das Panel eben bleibt.`,
+     S.panels.map((c,p)=>R.cnt[p]?`Panel ${PL[p]}: ${c.map(si=>(S.species[si]||{name:"?"}).name).join(" · ")}\n  ${S.n-1} Fugen · ca. ${ni((S.n-1)*R.t1*R.pLen[p]/1e6*S.leimG)} g Leim · ${clamps(R.pLen[p])} Zwingen`:"").filter(Boolean).join("\n")+
+     `\nPresszeit mind. 45 min, aushärten über Nacht`],
+    ["Panels kalibrieren",
+     `Nach dem Aushärten beide Flächen planparallel abtragen und eine Längskante besäumen — diese Kante ist die Referenz für alle folgenden Schnitte.`,
+     `${nf(R.t1)} mm → ${nf(R.t)} mm (Abtrag ${nf(S.hobel2)} mm)\nEine Längskante exakt 90° besäumen`],
+    ["Scheiben kappen",
+     `Quer zur Streifenrichtung ablängen — hier entsteht das Stirnholz. Schiebeschlitten mit Anschlag verwenden und den Winkel vorher an einem Reststück prüfen: jeder Grad Abweichung summiert sich über alle Scheiben.`,
+     `Scheibenbreite ${nf(R.s)} mm · ${S.m} Scheiben gesamt\n`+S.panels.map((c,p)=>R.cnt[p]?`Panel ${PL[p]}: ${R.cnt[p]} Stück`:"").filter(Boolean).join(" · ")],
+    ["Scheiben sortieren und aufstellen",
+     `Jede Scheibe um 90° auf die Stirnseite kippen und nach Legeplan anordnen. Vor dem Leimen trocken auslegen und die Fugenflucht prüfen.`,
+     S.rowMap.map((p,i)=>`R${i+1} ← Panel ${PL[p]}${S.rowFlip[i]?", um 180° drehen":""}`).join("\n")],
+    ["Verleimung 2 — Brett",
+     `Leim auf die Längsholzflanken der Scheiben, nicht zu sparsam: die offenen Poren saugen. Auf einer ebenen Unterlage spannen und die Scheiben mit Kanthölzern von oben niederhalten.`,
+     `${S.m-1} Fugen · ca. ${ni(R.g2)} g Leim · ${clamps(R.Lb)} Zwingen\nRohmaß nach Verleimung ${ni(R.Lb)} × ${ni(R.Wb)} × ${nf(R.s)} mm\nAushärten 24 h`],
+    ["Auf Fertigstärke kalibrieren",
+     S.verfahren==="hobel"
+       ? `Stirnholz darf nicht durch den Dickenhobel — die Messer reißen die Fasern aus und das Werkstück kann zurückschlagen. Auf Router-Sled oder Schleifmaschine umstellen.`
+       : `Mit ${verf} beidseitig planparallel abtragen. In kleinen Zustellungen arbeiten und das Brett zwischendurch wenden, damit es nicht schüsselt.`,
+     `${nf(R.s)} mm → ${nf(S.Tf)} mm (Abtrag ${nf(S.hobel3)} mm)\nVerfahren: ${verf}`],
+    ["Besäumen",
+     `Alle vier Kanten sauber trennen. Damit verschwinden auch die Leimreste und minimale Versätze an den Rändern.`,
+     `${ni(R.Lb)} × ${ni(R.Wb)} mm → ${ni(R.Lf)} × ${ni(R.Wf)} mm\nAbtrag ${nf(S.trimL)} mm in der Länge, ${nf(S.trimW)} mm in der Breite`],
+    ["Kanten, Griffe, Finish",
+     `Kanten fasen oder runden, optional Griffmulden und Füße. Vor dem letzten Schliff das Brett mit Wasser anfeuchten, trocknen lassen und die aufgestellten Fasern noch einmal brechen — sonst wird das Stirnholz nach dem ersten Spülen rau.`,
+     `Schliff K120 → K180 → K240\nWasser anfeuchten, trocknen, K240 wiederholen\nÖl ca. ${ni(R.oil)} ml für 2 Aufträge (${nf(R.oil/1000,2)} l bei ${nf(2*(R.Lf*R.Wf+R.Lf*S.Tf+R.Wf*S.Tf)/1e6,2)} m² Oberfläche)\nFertiggewicht ca. ${nf(R.weight,2)} kg`]
+  ];
+  document.getElementById("guide").innerHTML=steps.map(([h,p,spec])=>
+    `<li><h4>${esc(h)}</h4><p>${esc(p)}</p><pre class="spec">${esc(spec)}</pre></li>`).join("");
+}
+
+function renderMaterial(R){
+  let o=`<div class="tw"><table><caption>Bedarf bei den oben angegebenen Rohbrettmaßen, inklusive Besäumung und Schnittfugen.</caption>`+
+   `<thead><tr><th>Holzart</th><th class="n">Felder</th><th class="n">Streifen</th><th class="n">lfd. m</th><th class="n">Streifen/Brett</th><th class="n">Rohbretter</th><th class="n">Volumen</th></tr></thead><tbody>`;
+  R.mat.forEach(x=>{ if(!x.count) return;
+    o+=`<tr><td>${esc(x.sp.name)}</td><td class="n">${x.cells}</td><td class="n">${x.count}</td><td class="n">${nf(x.total/1000,2)}</td>`+
+      `<td class="n">${x.across} × ${Math.ceil(x.longStrips/Math.max(1,x.boards))||0}</td><td class="n">${x.boards}</td>`+
+      `<td class="n">${nf(x.boards*x.sp.rawT*x.sp.rawW*x.sp.rawL/1e9,3)} m³</td></tr>`;
+  });
+  o+=`</tbody></table></div>`;
+  o+=`<div class="tw"><table><thead><tr><th>Verbrauchsmaterial</th><th class="n">Menge</th><th>Hinweis</th></tr></thead><tbody>`+
+    `<tr><td>Leim Verleimung 1</td><td class="n">${ni(R.g1)} g</td><td>D3, offene Zeit beachten</td></tr>`+
+    `<tr><td>Leim Verleimung 2</td><td class="n">${ni(R.g2)} g</td><td>Stirnholzfugen saugen stärker</td></tr>`+
+    `<tr><td>Öl / Wachs</td><td class="n">${ni(R.oil)} ml</td><td>2 Aufträge, lebensmittelecht</td></tr>`+
+    `<tr><td>Schleifmittel</td><td class="n">K120 / K180 / K240</td><td>Zwischenschliff nach dem Wässern</td></tr>`+
+    `</tbody><tfoot><tr><td>Ausbeute</td><td class="n">${nf(R.yieldPct,0)} %</td><td>${nf(R.volFert/1000,2)} dm³ fertig aus ${nf(R.volRaw/1000,2)} dm³ Rohholz</td></tr></tfoot></table></div>`;
+  document.getElementById("material").innerHTML=o;
+}
+
+/* ------------------------------------------------------------- Bedienung */
+function field(k){
+  const f=FIELDS[k];
+  return `<div class="f" data-k="${k}"><div class="fl"><label for="in_${k}">${f.l} <span class="u">${f.u}</span></label>`+
+    `<input type="number" id="in_${k}" min="${f.min}" max="${f.max}" step="${f.step}"></div>`+
+    `<input type="range" id="rg_${k}" min="${f.min}" max="${f.max}" step="${f.step}" aria-labelledby="in_${k}"></div>`;
+}
+function mount(id,keys){ document.getElementById(id).innerHTML=keys.map(field).join(""); keys.forEach(bind); }
+function bind(k){
+  const num=document.getElementById("in_"+k), rg=document.getElementById("rg_"+k);
+  const set=v=>{ v=clamp(parseFloat(v),FIELDS[k].min,FIELDS[k].max); if(!isFinite(v)) return;
+    S[k]= FIELDS[k].step>=1 ? Math.round(v) : v; num.value=S[k]; rg.value=S[k]; render(); };
+  num.addEventListener("input",e=>{ const v=parseFloat(e.target.value); if(isFinite(v)){ S[k]=v; rg.value=v; render(); }});
+  num.addEventListener("blur",e=>set(e.target.value));
+  rg.addEventListener("input",e=>set(e.target.value));
+}
+function syncFields(){ Object.keys(FIELDS).forEach(k=>{
+  const num=document.getElementById("in_"+k), rg=document.getElementById("rg_"+k);
+  if(num){ num.value=S[k]; rg.value=S[k]; } }); }
+
+function renderWoods(){
+  const h=document.getElementById("woods");
+  h.innerHTML=S.species.map((sp,i)=>
+    `<div class="wood" data-i="${i}">
+      <input type="color" value="${sp.color}" data-p="color" aria-label="Farbe">
+      <input type="text" value="${esc(sp.name)}" data-p="name" aria-label="Name">
+      <button type="button" class="sm" data-del="${i}" aria-label="Entfernen"${S.species.length<2?" disabled":""}>×</button>
+      <div class="dims">
+        <div><label>Rohstärke mm</label><input type="number" value="${sp.rawT}" data-p="rawT" step="1" min="5"></div>
+        <div><label>Rohbreite mm</label><input type="number" value="${sp.rawW}" data-p="rawW" step="5" min="20"></div>
+        <div><label>Rohlänge mm</label><input type="number" value="${sp.rawL}" data-p="rawL" step="50" min="200"></div>
+        <div><label>Dichte kg/dm³</label><input type="number" value="${sp.dens}" data-p="dens" step="0.01" min="0.2"></div>
+      </div>
+    </div>`).join("");
+}
+
+function fitGrid(){
+  const R=compute();
+  S.n=clamp(Math.round((S.Lf+S.trimL)/S.w),2,FIELDS.n.max);
+  S.m=clamp(Math.round((S.Wf+S.trimW)/Math.max(R.t,1)),2,FIELDS.m.max);
+  syncFields(); render();
+}
+
+/* ---------------------------------------------------------- Persistenz */
+const KEY="temptoy.endgrain.v1";
+let saveT=null;
+function saveState(){
+  clearTimeout(saveT);
+  saveT=setTimeout(()=>{
+    try{
+      const j=JSON.stringify(S);
+      localStorage.setItem(KEY,j);
+      history.replaceState(null,"","#s="+btoa(unescape(encodeURIComponent(j))));
+    }catch(e){}
+  },400);
+}
+function loadState(){
+  let raw=null;
+  if(location.hash.indexOf("#s=")===0){
+    try{ raw=decodeURIComponent(escape(atob(location.hash.slice(3)))); }catch(e){}
+  }
+  if(!raw){ try{ raw=localStorage.getItem(KEY); }catch(e){} }
+  if(raw){ try{ const o=JSON.parse(raw); if(o&&o.species&&o.species.length) S=Object.assign(defState(),o); }catch(e){} }
+}
+
+/* ------------------------------------------------------------------ Init */
+loadState();
+mount("fields-ziel",["Lf","Wf","Tf"]);
+mount("fields-raster",["w","n","m"]);
+mount("fields-proz",["kerf","hobel1","hobel2","hobel3"]);
+mount("fields-zug",["fuege","kappPanel","kappRoh","besaeum","trimL","trimW"]);
+document.getElementById("fields-muster").innerHTML=
+  field("zPanels")+
+  `<div class="f"><div class="fl"><label for="verfahren">Kalibrieren des Stirnholzbretts</label></div>
+   <select id="verfahren">
+     <option value="sled">Router-Sled</option>
+     <option value="schleif">Breitband-/Zylinderschleifer</option>
+     <option value="hobel">Dickenhobel</option>
+   </select></div>`;
+bind("zPanels");
+document.getElementById("pattern").value=S.pattern;
+document.getElementById("verfahren").value=S.verfahren;
+syncFields(); renderWoods(); render();
+
+document.getElementById("pattern").addEventListener("change",e=>{ S.pattern=e.target.value; render(); });
+document.getElementById("verfahren").addEventListener("change",e=>{ S.verfahren=e.target.value;
+  if(S.verfahren==="schleif"&&S.hobel3<2) S.hobel3=2; syncFields(); render(); });
+document.getElementById("btnShuffle").addEventListener("click",()=>{ S.pattern="zufall";
+  document.getElementById("pattern").value="zufall"; render(); });
+document.getElementById("btnFit").addEventListener("click",fitGrid);
+document.getElementById("btnSquare").addEventListener("click",()=>{ const R=compute();
+  S.w=Math.round(R.t*10)/10; syncFields(); render(); });
+
+document.getElementById("woods").addEventListener("input",e=>{
+  const row=e.target.closest(".wood"); if(!row) return;
+  const i=+row.dataset.i, p=e.target.dataset.p; if(!p) return;
+  S.species[i][p] = (p==="name"||p==="color") ? e.target.value : parseFloat(e.target.value)||0;
+  render();
+});
+document.getElementById("woods").addEventListener("click",e=>{
+  const d=e.target.dataset.del; if(d===undefined) return;
+  if(S.species.length<2) return;
+  S.species.splice(+d,1);
+  S.panels=S.panels.map(r=>r.map(v=>clamp(v,0,S.species.length-1)));
+  renderWoods(); render();
+});
+document.getElementById("btnAddWood").addEventListener("click",()=>{
+  const w=WOODS[S.species.length%WOODS.length];
+  const ref=S.species[0];
+  S.species.push({name:w.name,color:w.color,dens:w.dens,rawT:ref.rawT,rawW:ref.rawW,rawL:ref.rawL});
+  renderWoods(); render();
+});
+
+/* Zelle antippen → Holzart wechseln (wechselt in den Frei-Modus) */
+document.getElementById("preview").addEventListener("click",e=>{
+  const c=e.target.closest(".cell"); if(!c) return;
+  const i=+c.dataset.i, j=+c.dataset.j;
+  const p=S.rowMap[i], col=S.rowFlip[i] ? S.n-1-j : j;
+  S.pattern="frei"; document.getElementById("pattern").value="frei";
+  buildPattern();
+  S.panels[p][col]=(S.panels[p][col]+1)%S.species.length;
+  render();
+});
+
+/* Reihe: kurz = Panel wechseln, lang = drehen */
+let pressT=null,longPress=false;
+const rm=document.getElementById("rowmap");
+rm.addEventListener("pointerdown",e=>{ const b=e.target.closest("button"); if(!b) return;
+  longPress=false; pressT=setTimeout(()=>{ longPress=true; const i=+b.dataset.row;
+    S.pattern="frei"; document.getElementById("pattern").value="frei";
+    S.rowFlip[i]=!S.rowFlip[i]; render(); },500); });
+rm.addEventListener("pointerup",()=>clearTimeout(pressT));
+rm.addEventListener("pointerleave",()=>clearTimeout(pressT));
+rm.addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b||longPress) return;
+  const i=+b.dataset.row;
+  S.pattern="frei"; document.getElementById("pattern").value="frei"; buildPattern();
+  S.rowMap[i]=(S.rowMap[i]+1)%S.panels.length; render(); });
+
+/* Export */
+document.getElementById("btnPdf").addEventListener("click",()=>window.print());
+document.getElementById("btnLink").addEventListener("click",async e=>{
+  try{ await navigator.clipboard.writeText(location.href); e.target.textContent="Link kopiert"; }
+  catch(err){ e.target.textContent="Adresszeile kopieren"; }
+  setTimeout(()=>{e.target.textContent="Link kopieren";},2200);
+});
+document.getElementById("btnReset").addEventListener("click",()=>{
+  S=defState(); try{localStorage.removeItem(KEY);}catch(e){}
+  history.replaceState(null,"",location.pathname);
+  document.getElementById("pattern").value=S.pattern;
+  document.getElementById("verfahren").value=S.verfahren;
+  syncFields(); renderWoods(); render();
+});
+
+/* Druck: Details öffnen, Datum stempeln */
+let wasOpen=false;
+window.addEventListener("beforeprint",()=>{
+  const d=document.getElementById("detParams"); wasOpen=d.open; d.open=true;
+  document.getElementById("stamp").textContent="Stirnholz-Rechner · Plan vom "+
+    new Date().toLocaleDateString("de-DE",{day:"2-digit",month:"long",year:"numeric"})+
+    " · "+S.n+"×"+S.m+" Raster";
+});
+window.addEventListener("afterprint",()=>{ document.getElementById("detParams").open=wasOpen; });
+document.getElementById("foot").textContent="TempToy · Stirnholz-Rechner";
+</script>
+</body>
+</html>
