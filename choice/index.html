@@ -85,15 +85,18 @@
   @keyframes shake{0%,100%{margin-left:0}20%{margin-left:-6px}40%{margin-left:6px}60%{margin-left:-4px}80%{margin-left:3px}}
 
   /* Modus 3: Spielfeld */
-  body.m3 .opts{flex:1;min-height:8rem;display:block}
-  body.m3 .opt{position:absolute;transition:left .2s ease-out, top .2s ease-out, font-size .35s ease}
+  body.m3 .opts{flex:1;min-height:9.5rem;display:block}
+  body.m3 .opt{position:absolute;transition:none}
+  .jump{animation:jump .25s ease-out}
+  @keyframes jump{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
 
   #msg{
     flex:1;min-height:2.4em;
     font-family:'Caveat',cursive;font-size:1.4rem;line-height:1.12;color:var(--ink);
     margin:.6rem 0 .2rem;
   }
-  body.m3 #msg{flex:none;min-height:2.3em}
+  body.m3 #msg{flex:none;height:3.4em;min-height:0;overflow:hidden}
+  body.m3 #stats{height:2.5em;overflow:hidden}
   #msg.pop{animation:pop .35s ease-out}
   @keyframes pop{from{opacity:0;transform:translateY(6px) rotate(-1deg)}to{opacity:1;transform:none}}
   #stats{font-size:.85rem;color:var(--muted);margin:0 0 .3rem}
@@ -243,7 +246,7 @@ window.onerror = function (m, s, l, c) {
       if (l === "nein") s = Math.max(0.6, 1 - votes * 0.05);
       b.style.setProperty("--s", s.toFixed(3));
     });
-    if (mode === 3) setTimeout(keepAllInside, 380);
+    if (mode === 3) keepAllInside();
   }
 
   function renderStats() {
@@ -304,61 +307,83 @@ window.onerror = function (m, s, l, c) {
     b.classList.add("shake");
   }
 
-  /* ---------- Modus 3: Ausweichen ---------- */
-  function overlaps(x, y, w, h, other) {
-    var ox = other.offsetLeft, oy = other.offsetTop, ow = other.offsetWidth, oh = other.offsetHeight, m = 12;
-    return x < ox + ow + m && x + w + m > ox && y < oy + oh + m && y + h + m > oy;
+  /* ---------- Modus 3: Ausweichen (jede Option in eigener Zeile, nie überlappend) ---------- */
+  var rows = {}, xs = {};
+
+  function remPx() { return parseFloat(getComputedStyle(document.documentElement).fontSize) || 15; }
+  function rowCount() { return Math.max(3, Math.floor(field.clientHeight / (remPx() * 3.1))); }
+  function rowHeight() { return field.clientHeight / rowCount(); }
+
+  function setX(b, x) {
+    var maxX = Math.max(0, field.clientWidth - b.offsetWidth);
+    var v = Math.round(Math.min(Math.max(0, x), maxX));
+    xs[btns.indexOf(b)] = v;
+    b.style.left = v + "px";
   }
 
-  function placeFree(b, px, py) {
-    var fr = field.getBoundingClientRect();
-    var w = b.offsetWidth, h = b.offsetHeight;
-    var maxX = Math.max(0, fr.width - w), maxY = Math.max(0, fr.height - h);
-    var lx = px - fr.left, ly = py - fr.top;
-    var minDist = Math.max(110, Math.min(fr.width, fr.height) * 0.45);
-    var others = btns.filter(function (o) { return o !== b; });
-    var best = null, bestScore = -1;
-    for (var t = 0; t < 60; t++) {
-      var x = Math.random() * maxX, y = Math.random() * maxY;
-      var hit = false;
-      for (var k = 0; k < others.length; k++) { if (overlaps(x, y, w, h, others[k])) { hit = true; break; } }
-      if (hit) continue;
-      var dist = Math.sqrt(Math.pow(x + w / 2 - lx, 2) + Math.pow(y + h / 2 - ly, 2));
-      if (dist >= minDist) { best = { x: x, y: y }; break; }
-      if (dist > bestScore) { bestScore = dist; best = { x: x, y: y }; }
-    }
-    if (!best) best = { x: Math.random() * maxX, y: Math.random() * maxY };
-    b.style.left = Math.round(best.x) + "px";
-    b.style.top = Math.round(best.y) + "px";
+  function layoutRows() {
+    if (mode !== 3) return;
+    var n = rowCount(), rh = rowHeight();
+    var used = {};
+    btns.forEach(function (b) {
+      var r = rows[btns.indexOf(b)];
+      if (r === undefined || r >= n || used[r]) {
+        for (var k = 0; k < n; k++) { if (!used[k]) { r = k; break; } }
+      }
+      used[r] = true;
+      rows[btns.indexOf(b)] = r;
+      b.style.top = Math.round(r * rh + (rh - b.offsetHeight) / 2) + "px";
+      setX(b, xs[btns.indexOf(b)] || 0);
+    });
   }
-
-  function keepInside(b) {
-    var w = b.offsetWidth, h = b.offsetHeight;
-    var x = Math.min(Math.max(0, b.offsetLeft), Math.max(0, field.clientWidth - w));
-    var y = Math.min(Math.max(0, b.offsetTop), Math.max(0, field.clientHeight - h));
-    b.style.left = Math.round(x) + "px";
-    b.style.top = Math.round(y) + "px";
-  }
-  function keepAllInside() { if (mode === 3) btns.forEach(keepInside); }
+  function keepAllInside() { layoutRows(); }
 
   function placeAll() {
     if (mode !== 3) return;
-    btns.forEach(function (b) { b.style.left = "-9999px"; b.style.top = "-9999px"; });
-    var ja = btnOf("ja");
-    var fw = field.clientWidth, fh = field.clientHeight;
-    ja.style.left = Math.round((fw - ja.offsetWidth) * (0.1 + Math.random() * 0.35)) + "px";
-    ja.style.top = Math.round((fh - ja.offsetHeight) * (0.3 + Math.random() * 0.4)) + "px";
-    btns.forEach(function (b) { if (b !== ja) placeFree(b, -9999, -9999); });
+    var n = rowCount(), pool = [];
+    for (var k = 0; k < n; k++) pool.push(k);
+    for (var t = pool.length - 1; t > 0; t--) { var q = Math.floor(Math.random() * (t + 1)); var tmp = pool[t]; pool[t] = pool[q]; pool[q] = tmp; }
+    rows = {}; xs = {};
+    btns.forEach(function (b, i) {
+      rows[i] = pool[i];
+      setX(b, Math.random() * (field.clientWidth - b.offsetWidth));
+    });
+    layoutRows();
+  }
+
+  function placeFree(b, px, py) {
+    var n = rowCount(), rh = rowHeight();
+    var fr = field.getBoundingClientRect();
+    var ly = py - fr.top, lx = px - fr.left;
+    var me = btns.indexOf(b), taken = {};
+    btns.forEach(function (o, i) { if (i !== me) taken[rows[i]] = true; });
+    var free = [];
+    for (var k = 0; k < n; k++) { if (!taken[k] && k !== rows[me]) free.push(k); }
+    if (free.length) {
+      var far = free.filter(function (k) { return Math.abs((k + 0.5) * rh - ly) >= rh * 1.5; });
+      var pick = far.length ? far : free;
+      if (!far.length) pick.sort(function (x, y) { return Math.abs((y + 0.5) * rh - ly) - Math.abs((x + 0.5) * rh - ly); });
+      rows[me] = far.length ? pick[Math.floor(Math.random() * pick.length)] : pick[0];
+      setX(b, Math.random() * (field.clientWidth - b.offsetWidth));
+    } else {
+      setX(b, lx < field.clientWidth / 2 ? field.clientWidth : 0);
+    }
+    layoutRows();
   }
 
   function dodge(b, px, py) {
     placeFree(b, px, py);
+    b.classList.remove("jump");
+    void b.offsetWidth;
+    b.classList.add("jump");
     lastDodge = Date.now();
     dodges++;
     say("dodge");
     renderStats();
     save();
   }
+
+  if (window.ResizeObserver) new ResizeObserver(function () { layoutRows(); }).observe(field);
 
   /* ---------- Klicks ---------- */
   btns.forEach(function (b) {
@@ -424,9 +449,11 @@ window.onerror = function (m, s, l, c) {
     votes = 0; dodges = 0; idx = {}; busy = false;
     order = DEFAULT_ORDER.slice();
     clearChecks();
+    rows = {}; xs = {};
     btns.forEach(function (b) {
       b.style.left = ""; b.style.top = ""; b.style.transform = "";
       b.classList.remove("shake");
+      b.classList.remove("jump");
     });
     msg.textContent = "";
     msg.classList.remove("pop");
@@ -458,7 +485,7 @@ window.onerror = function (m, s, l, c) {
     placeAll();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeAll);
   }
-  window.addEventListener("resize", function () { if (mode === 3) placeAll(); });
+  window.addEventListener("resize", function () { if (mode === 3) layoutRows(); });
 
   var now = new Date();
   $("#printDate").textContent =
