@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Choice</title>
-<meta name="tool-icon" content="👌">
+<meta name="tool-icon" content="🪚">
 <link rel="stylesheet" href="../print.css" media="print">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -154,4 +154,116 @@
       "Vielleicht wurde automatisch in Ja übersetzt. 😇",
       "Vielleicht ist nur ein Ja, das noch Kaffee braucht. ☕",
       "Ich werte das mal als enthusiastisches Ja.",
-      "Vielleicht = Ja mit Bedenkze
+      "Vielleicht = Ja mit Bedenkzeit. Bedenkzeit ist abgelaufen.",
+      "Das System kennt nur zwei Zustände: Ja und gleich Ja."
+    ],
+    nein: [
+      "Hoppla, da ist dein Finger verrutscht. Ich hab es korrigiert. 😉",
+      "Nein? Die Autokorrektur sagt: Ja.",
+      "Das Nein-Kästchen ist leider defekt. Techniker ist informiert. 🔧",
+      "Die SawStop stoppt ein Sägeblatt in 5 Millisekunden. Dieses Nein wurde schneller gestoppt.",
+      "Meine zehn Finger haben auch abgestimmt: 10 zu 0 für Ja. 🖐️🖐️",
+      "Die SawStop erkennt ein Würstchen am Blatt. Ich erkenne ein Ja, wenn ich eins sehe. 🌭",
+      "Nein wurde als Tippfehler erkannt. Kann jedem mal passieren."
+    ]
+  };
+  var NEIN_LABELS = ["Nein", "Nein", "Nein", "Nein (nicht empfohlen)", "Nein (wirklich?)", "Nö?", "nein ...", "(nein)"];
+
+  function $(s) { return document.querySelector(s); }
+  var jaBox = $("#jaBox"), msg = $("#msg"), stats = $("#stats"), neinLbl = $("#neinLbl");
+  var optJa = $(".opt[data-c=ja]"), optNein = $(".opt[data-c=nein]");
+  var idx = { ja: 0, vielleicht: 0, nein: 0 };
+
+  var votes = 0;
+  try { votes = parseInt(localStorage.getItem("choice_votes") || "0", 10) || 0; } catch (e) {}
+  function save() { try { localStorage.setItem("choice_votes", String(votes)); } catch (e) {} }
+
+  function renderStats() {
+    if (votes === 0) {
+      stats.textContent = "Noch keine Stimme abgegeben. (Das Ergebnis steht trotzdem schon fest.)";
+    } else {
+      stats.textContent = "Zustimmungsquote: 100 % · " + votes + " von " + votes + " Stimmen für Ja";
+    }
+  }
+
+  function escalate() {
+    optJa.style.setProperty("--s", Math.min(1.35, 1 + votes * 0.045).toFixed(3));
+    optNein.style.setProperty("--s", Math.max(0.55, 1 - votes * 0.06).toFixed(3));
+    neinLbl.textContent = NEIN_LABELS[Math.min(votes, NEIN_LABELS.length - 1)];
+    if (votes >= 6) {
+      var dx = Math.round((Math.random() * 2 - 1) * 26);
+      var rot = (Math.random() * 6 - 3).toFixed(1);
+      optNein.style.transform = "translateX(" + dx + "px) rotate(" + rot + "deg)";
+    }
+  }
+
+  function burst() {
+    var r = jaBox.getBoundingClientRect();
+    var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    var icons = ["❤️", "🪚", "✨", "🌭", "💕", "🪵"];
+    for (var i = 0; i < 10; i++) {
+      var s = document.createElement("span");
+      s.className = "fx";
+      s.textContent = icons[Math.floor(Math.random() * icons.length)];
+      s.style.left = (cx - 12) + "px";
+      s.style.top = (cy - 12) + "px";
+      var a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 90;
+      s.style.setProperty("--dx", (Math.cos(a) * d) + "px");
+      s.style.setProperty("--dy", (Math.sin(a) * d - 30) + "px");
+      s.style.setProperty("--r", (Math.random() * 360 - 180) + "deg");
+      document.body.appendChild(s);
+      (function (el) { setTimeout(function () { el.remove(); }, 1200); })(s);
+    }
+  }
+
+  function checkJa(delay) {
+    setTimeout(function () {
+      jaBox.classList.remove("checked");
+      void jaBox.offsetWidth;
+      jaBox.classList.add("checked");
+      burst();
+    }, delay);
+  }
+
+  function say(choice) {
+    var list = MSGS[choice];
+    var text = list[idx[choice] % list.length].replace("{n}", votes);
+    idx[choice]++;
+    msg.classList.remove("pop");
+    void msg.offsetWidth;
+    msg.textContent = text;
+    msg.classList.add("pop");
+  }
+
+  var opts = document.querySelectorAll(".opt");
+  for (var k = 0; k < opts.length; k++) {
+    opts[k].addEventListener("click", function () {
+      var c = this.getAttribute("data-c");
+      votes++;
+      save();
+      if (c !== "ja") {
+        this.classList.remove("shake");
+        void this.offsetWidth;
+        this.classList.add("shake");
+      }
+      checkJa(c === "ja" ? 0 : 300);
+      say(c);
+      escalate();
+      renderStats();
+    });
+  }
+
+  $("#printBtn").addEventListener("click", function () { window.print(); });
+
+  if (votes > 0) { jaBox.classList.add("checked"); escalate(); }
+  renderStats();
+
+  var now = new Date();
+  $("#printDate").textContent =
+    "Zustimmung rechtsverbindlich dokumentiert am " +
+    now.toLocaleDateString("de-DE") + " um " +
+    now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) + " Uhr.";
+})();
+</script>
+</body>
+</html>
