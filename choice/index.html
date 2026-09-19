@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Choice</title>
-<meta name="tool-icon" content="✔️">
+<meta name="tool-icon" content="👌">
 <link rel="stylesheet" href="../print.css" media="print">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,6 +44,7 @@
     content:"";position:absolute;top:-14px;left:50%;width:110px;height:28px;
     transform:translateX(-50%) rotate(3deg);background:var(--tape);
     box-shadow:0 1px 3px rgba(0,0,0,.12);
+    pointer-events:none;
   }
   .hi{font-family:'Caveat',cursive;font-size:1.6rem;color:var(--ink);margin:0 0 4px}
   h1{font-family:'Caveat',cursive;font-weight:700;font-size:2.3rem;line-height:1.05;color:var(--ink);margin:0 0 6px}
@@ -57,6 +58,7 @@
     font-size:calc(1.55rem * var(--s));
     transition:font-size .35s ease, transform .35s ease;
     -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
   }
   .box{
     position:relative;flex:none;width:34px;height:34px;
@@ -65,13 +67,13 @@
   }
   .opt[data-c="vielleicht"] .box{transform:rotate(1.5deg)}
   .opt[data-c="nein"] .box{transform:rotate(-1deg)}
-  .box svg{position:absolute;inset:-6px;width:calc(100% + 12px);height:calc(100% + 12px);overflow:visible}
+  .box svg{position:absolute;inset:-6px;width:calc(100% + 12px);height:calc(100% + 12px);overflow:visible;pointer-events:none}
   .box path{fill:none;stroke:var(--red);stroke-width:4.5;stroke-linecap:round;stroke-dasharray:50;stroke-dashoffset:50}
   .box.checked path:nth-child(1){animation:draw .22s ease-out forwards}
   .box.checked path:nth-child(2){animation:draw .22s ease-out .2s forwards}
   @keyframes draw{to{stroke-dashoffset:0}}
   .shake{animation:shake .4s}
-  @keyframes shake{0%,100%{translate:0}20%{translate:-6px}40%{translate:6px}60%{translate:-4px}80%{translate:3px}}
+  @keyframes shake{0%,100%{margin-left:0}20%{margin-left:-6px}40%{margin-left:6px}60%{margin-left:-4px}80%{margin-left:3px}}
   #msg{
     font-family:'Caveat',cursive;font-size:1.55rem;line-height:1.15;color:var(--ink);
     min-height:3.6em;margin:14px 0 6px;
@@ -108,15 +110,15 @@
   <p class="hint">Bitte ankreuzen:</p>
 
   <div class="opts">
-    <button class="opt" data-c="ja">
+    <button type="button" class="opt" data-c="ja">
       <span class="box" id="jaBox"><svg viewBox="0 0 40 40"><path d="M6 7 L34 33"/><path d="M33 6 L8 34"/></svg></span>
       <span class="lbl">Ja</span>
     </button>
-    <button class="opt" data-c="vielleicht">
+    <button type="button" class="opt" data-c="vielleicht">
       <span class="box"></span>
       <span class="lbl">Vielleicht</span>
     </button>
-    <button class="opt" data-c="nein">
+    <button type="button" class="opt" data-c="nein">
       <span class="box"></span>
       <span class="lbl" id="neinLbl">Nein</span>
     </button>
@@ -135,123 +137,21 @@
 </main>
 
 <div class="actions">
-  <button onclick="window.print()">Als PDF sichern</button>
+  <button type="button" id="printBtn">Als PDF sichern</button>
 </div>
 
 <script>
-(() => {
-  const MSGS = {
+(function () {
+  var MSGS = {
     ja: [
-      "Wusste ich's doch! 🥰",
-      "Ein klares Ja. Ich hab's jetzt schriftlich.",
+      "Wusste ich es doch! 🥰",
+      "Ein klares Ja. Ich hab es jetzt schriftlich.",
       "Ja! Schon wieder! Du bist die Allerbeste.",
       "Ja-Stimme Nr. {n} ordnungsgemäß erfasst. ✅",
-      "So viel Zustimmung – ich werd ganz verlegen."
+      "So viel Zustimmung, ich werd ganz verlegen."
     ],
     vielleicht: [
-      "„Vielleicht" wurde automatisch in „Ja" übersetzt. 😇",
+      "Vielleicht wurde automatisch in Ja übersetzt. 😇",
       "Vielleicht ist nur ein Ja, das noch Kaffee braucht. ☕",
       "Ich werte das mal als enthusiastisches Ja.",
-      "Vielleicht = Ja mit Bedenkzeit. Bedenkzeit ist abgelaufen.",
-      "Das System kennt nur zwei Zustände: Ja und gleich Ja."
-    ],
-    nein: [
-      "Hoppla, da ist dein Finger verrutscht. Ich hab's korrigiert. 😉",
-      "Nein? Die Autokorrektur sagt: Ja.",
-      "Das Nein-Kästchen ist leider defekt. Techniker ist informiert. 🔧",
-      "Die SawStop stoppt ein Sägeblatt in 5 Millisekunden. Dieses Nein wurde schneller gestoppt.",
-      "Meine zehn Finger haben auch abgestimmt: 10 : 0 für Ja. 🖐️🖐️",
-      "Die SawStop erkennt ein Würstchen am Blatt. Ich erkenne ein Ja, wenn ich eins sehe. 🌭",
-      "Nein wurde als Tippfehler erkannt. Kann jedem mal passieren."
-    ]
-  };
-  const NEIN_LABELS = ["Nein","Nein","Nein","Nein (nicht empfohlen)","Nein (wirklich?)","Nö?","nein …","(nein)"];
-
-  const $ = s => document.querySelector(s);
-  const jaBox = $("#jaBox"), msg = $("#msg"), stats = $("#stats"), neinLbl = $("#neinLbl");
-  const optJa = $('[data-c="ja"]'), optNein = $('[data-c="nein"]');
-  const idx = { ja:0, vielleicht:0, nein:0 };
-
-  let votes = 0;
-  try { votes = parseInt(localStorage.getItem("choice_votes") || "0", 10) || 0; } catch(e){}
-  const save = () => { try { localStorage.setItem("choice_votes", String(votes)); } catch(e){} };
-
-  function renderStats(){
-    stats.textContent = votes === 0
-      ? "Noch keine Stimme abgegeben. (Das Ergebnis steht trotzdem schon fest.)"
-      : `Zustimmungsquote: 100 % · ${votes} von ${votes} Stimmen für Ja`;
-  }
-
-  function escalate(){
-    optJa.style.setProperty("--s", Math.min(1.35, 1 + votes * 0.045).toFixed(3));
-    optNein.style.setProperty("--s", Math.max(0.55, 1 - votes * 0.06).toFixed(3));
-    neinLbl.textContent = NEIN_LABELS[Math.min(votes, NEIN_LABELS.length - 1)];
-    if (votes >= 6){
-      const dx = Math.round((Math.random() * 2 - 1) * 26);
-      optNein.style.transform = `translateX(${dx}px) rotate(${(Math.random()*6-3).toFixed(1)}deg)`;
-    }
-  }
-
-  function checkJa(delay){
-    setTimeout(() => {
-      jaBox.classList.remove("checked");
-      void jaBox.offsetWidth;
-      jaBox.classList.add("checked");
-      burst();
-    }, delay);
-  }
-
-  function burst(){
-    const r = jaBox.getBoundingClientRect();
-    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    const icons = ["❤️","🪚","✨","🌭","💕","🪵"];
-    for (let i = 0; i < 10; i++){
-      const s = document.createElement("span");
-      s.className = "fx";
-      s.textContent = icons[Math.floor(Math.random() * icons.length)];
-      s.style.left = (cx - 12) + "px";
-      s.style.top = (cy - 12) + "px";
-      const a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 90;
-      s.style.setProperty("--dx", Math.cos(a) * d + "px");
-      s.style.setProperty("--dy", Math.sin(a) * d - 30 + "px");
-      s.style.setProperty("--r", (Math.random() * 360 - 180) + "deg");
-      document.body.appendChild(s);
-      setTimeout(() => s.remove(), 1200);
-    }
-  }
-
-  function say(choice){
-    const list = MSGS[choice];
-    const text = list[idx[choice] % list.length].replace("{n}", votes);
-    idx[choice]++;
-    msg.classList.remove("pop"); void msg.offsetWidth;
-    msg.textContent = text;
-    msg.classList.add("pop");
-  }
-
-  document.querySelectorAll(".opt").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const c = btn.dataset.c;
-      votes++; save();
-      if (c !== "ja"){
-        btn.classList.remove("shake"); void btn.offsetWidth; btn.classList.add("shake");
-      }
-      checkJa(c === "ja" ? 0 : 300);
-      say(c);
-      escalate();
-      renderStats();
-    });
-  });
-
-  // Ja ist natürlich schon vorab angekreuzt, falls vorher abgestimmt wurde
-  if (votes > 0){ jaBox.classList.add("checked"); escalate(); }
-  renderStats();
-
-  const d = new Date();
-  $("#printDate").textContent =
-    "Zustimmung rechtsverbindlich dokumentiert am " +
-    d.toLocaleDateString("de-DE") + " um " + d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}) + " Uhr.";
-})();
-</script>
-</body>
-</html>
+      "Vielleicht = Ja mit Bedenkze
