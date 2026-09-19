@@ -103,6 +103,14 @@
 </style>
 </head>
 <body>
+<script>
+window.onerror = function (m, s, l, c) {
+  var d = document.createElement("div");
+  d.style.cssText = "background:#c00;color:#fff;padding:10px;font:14px monospace;margin:8px 0";
+  d.textContent = "Fehler: " + m + " (Zeile " + l + ":" + c + ")";
+  document.body.insertBefore(d, document.body.firstChild);
+};
+</script>
 
 <main class="note">
   <p class="hi">Liebe Jasmin,</p>
