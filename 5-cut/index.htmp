@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>5-Cut</title>
+<meta name="tool-icon" content="📐">
+<link rel="stylesheet" href="../print.css" media="print">
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--tx:#1d1d1f;--mu:#6e6e73;--ln:#d9d7d2;--ac:#1f6feb;--ok:#1a7f37;--bad:#c62828;--wood:#ead5aa;--woodln:#b8955a;--fence:#5a5a5a;--blade:#d93025}
+@media (prefers-color-scheme:dark){:root{--bg:#121212;--card:#1e1e1e;--tx:#f2f2f2;--mu:#9a9a9f;--ln:#333;--ac:#4c8dff;--ok:#3fb950;--bad:#ff6b6b;--wood:#6b5536;--woodln:#a88a5a;--fence:#9a9a9a;--blade:#ff5a4f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.3 -apple-system,system-ui,sans-serif;padding:max(10px,env(safe-area-inset-top)) 14px 14px}
+main{max-width:480px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+h1{font-size:18px;margin:0}
+.ghost{background:none;border:1px solid var(--ln);color:var(--mu);border-radius:8px;padding:4px 8px;font-size:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+label{font-size:11.5px;color:var(--mu);display:block}
+input{width:100%;font-size:17px;padding:7px 8px;border:1px solid var(--ln);border-radius:8px;background:var(--card);color:var(--tx);margin-top:2px;-webkit-appearance:none}
+.seg{display:flex;margin-top:8px;border:1px solid var(--ln);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--card);color:var(--tx);padding:7px 4px;font-size:13px}
+.seg button.on{background:var(--ac);color:#fff}
+.calc{width:100%;margin-top:8px;padding:11px;font-size:16px;font-weight:600;border:0;border-radius:10px;background:var(--ac);color:#fff}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:8px 10px;margin-top:8px}
+.big{font-size:22px;font-weight:700}
+.sub{font-size:12.5px;color:var(--mu)}
+.dir{font-size:13.5px;font-weight:600}
+svg{display:block;width:100%;height:auto}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row .card{margin-top:0;padding:6px 8px}
+.cap{font-size:12.5px;text-align:center}
+.cap b{font-size:14px}
+.err{color:var(--bad)}
+.okc{color:var(--ok)}
+.hint{font-size:11.5px;color:var(--mu);margin-top:8px;text-align:center}
+.printdate{display:none}
+@media print{.printdate{display:block;font-size:12px;color:#666}.ghost,.calc{display:none}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>📐 5-Schnitt-Rechner</h1>
+  <button class="ghost" onclick="window.print()">Als PDF sichern</button>
+</header>
+<p class="printdate" id="printdate"></p>
+
+<div class="grid">
+  <div><label for="a">Streifen am Anschlag A (mm)</label><input id="a" type="text" inputmode="decimal" autocomplete="off"></div>
+  <div><label for="b">Streifen freies Ende B (mm)</label><input id="b" type="text" inputmode="decimal" autocomplete="off"></div>
+  <div><label for="l">Messabstand A↔B (mm)</label><input id="l" type="text" inputmode="decimal" autocomplete="off"></div>
+  <div><label for="d">Drehpunkt ↔ Verstellpunkt (mm)</label><input id="d" type="text" inputmode="decimal" autocomplete="off"></div>
+</div>
+<div class="seg" id="seg">
+  <button data-p="near">Drehpunkt am Sägeblatt</button>
+  <button data-p="far">Drehpunkt außen</button>
+</div>
+<button class="calc" id="calc">Berechnen</button>
+
+<div id="out"><p class="hint">Streifen des 5. Schnitts an beiden Enden mit dem Messschieber messen: A = Ende, das am Anschlag lag, B = freies Ende.</p></div>
+</main>
+
+<script>
+const KEY='temptoy-fivecut';
+const F=['a','b','l','d'];
+let st={a:'',b:'',l:'',d:'',p:'near'};
+
+function load(){
+  try{const m=location.hash.match(/s=([^&]+)/);
+    if(m){Object.assign(st,JSON.parse(decodeURIComponent(escape(atob(m[1])))));return;}}catch(e){}
+  try{const s=localStorage.getItem(KEY);if(s)Object.assign(st,JSON.parse(s));}catch(e){}
+}
+function save(){
+  const j=JSON.stringify(st);
+  try{localStorage.setItem(KEY,j);}catch(e){}
+  try{history.replaceState(null,'','#s='+btoa(unescape(encodeURIComponent(j))));}catch(e){}
+}
+const num=v=>parseFloat(String(v).trim().replace(',','.'));
+const fmt=(x,n=4)=>x.toLocaleString('de-DE',{minimumFractionDigits:n,maximumFractionDigits:n});
+
+function paintSeg(){document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.p===st.p));}
+
+function fenceSvg(pNear,up,adjTxt){
+  // Werkstück oben, Anschlag darunter, Sägeblatt rechts
+  const y=86, bx=272, nearX=250, farX=30;
+  const px=pNear?nearX:farX, ax=pNear?farX:nearX;
+  const ay2=up?52:122;
+  const gy=up?y-16:y+16;
+  const lx=ax<150?ax+10:ax-10, anchor=ax<150?'start':'end';
+  return `<svg viewBox="0 0 340 130" role="img" aria-label="Verstellrichtung">
+  <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--ac)"/></marker></defs>
+  <rect x="20" y="28" width="${bx-24}" height="${y-6-28}" fill="var(--wood)" stroke="var(--woodln)"/>
+  <text x="${(20+bx-4)/2}" y="50" text-anchor="middle" font-size="12" fill="var(--tx)" opacity=".7">Werkstück</text>
+  <rect x="${bx-2}" y="6" width="6" height="118" fill="var(--blade)" rx="2"/>
+  <text x="${bx+8}" y="18" font-size="11" fill="var(--blade)">Blatt</text>
+  <rect x="14" y="${y-6}" width="${bx-18}" height="12" fill="var(--fence)" rx="2"/>
+  <line x1="${px}" y1="${y}" x2="${ax}" y2="${gy}" stroke="var(--ac)" stroke-width="2" stroke-dasharray="5 4"/>
+  <circle cx="${px}" cy="${y}" r="6" fill="var(--card)" stroke="var(--tx)" stroke-width="2"/>
+  <text x="${px}" y="${y+24}" text-anchor="middle" font-size="11" fill="var(--tx)">Drehpunkt</text>
+  <line x1="${ax}" y1="${y}" x2="${ax}" y2="${ay2}" stroke="var(--ac)" stroke-width="3" marker-end="url(#ar)"/>
+  <text x="${lx}" y="${up?66:116}" text-anchor="${anchor}" font-size="13" font-weight="700" fill="var(--ac)">${adjTxt}</text>
+</svg>`;
+}
+
+function devSvg(obtuse){
+  const s=obtuse?20:-20;
+  return `<svg viewBox="0 0 160 105" role="img" aria-label="Winkelabweichung">
+  <polygon points="12,92 108,92 ${108+s},18 12,18" fill="var(--wood)" stroke="var(--woodln)"/>
+  <line x1="108" y1="92" x2="108" y2="10" stroke="var(--mu)" stroke-dasharray="3 3"/>
+  <line x1="108" y1="92" x2="${108+s}" y2="18" stroke="var(--bad)" stroke-width="2.5"/>
+  <rect x="4" y="92" width="${120}" height="8" fill="var(--fence)" rx="1"/>
+  <line x1="108" y1="14" x2="${108+s}" y2="14" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="${108+s/2}" y="10" text-anchor="middle" font-size="10" fill="var(--bad)">Δ</text>
+  <text x="${100}" y="88" text-anchor="end" font-size="9" fill="var(--mu)">${obtuse?'&gt; 90°':'&lt; 90°'}</text>
+</svg>`;
+}
+
+function calc(){
+  const A=num(st.a),B=num(st.b),L=num(st.l),D=num(st.d);
+  const out=document.getElementById('out');
+  if([A,B,L,D].some(isNaN)){out.innerHTML='<p class="hint err">Bitte alle vier Werte eingeben.</p>';return;}
+  if(L<=0||D<=0){out.innerHTML='<p class="hint err">Messabstand und Drehpunktabstand müssen größer 0 sein.</p>';return;}
+  const delta=A-B;            // >0: Streifen am Anschlag breiter
+  const t=delta/(4*L);        // tan(Winkelfehler) je Schnitt
+  const eDeg=Math.atan(t)*180/Math.PI;
+  const adj=Math.abs(D*t);
+  const d100=Math.abs(100*t), d1000=Math.abs(1000*t);
+  if(adj<0.00005&&d1000<0.00005){
+    out.innerHTML='<div class="card"><div class="big okc">✓ 90° – passt</div><div class="sub">Keine messbare Abweichung, nichts verstellen.</div></div>';return;
+  }
+  const pNear=st.p==='near';
+  const obtuse=delta>0;       // Winkel am Werkstück > 90°
+  const up=(obtuse===pNear);  // Verstellpunkt zum Werkstück hin
+  const endName=pNear?'Äußeres Anschlagende':'Anschlagende am Sägeblatt';
+  const dirTxt=up?'zum Werkstück hin':'vom Werkstück weg';
+  const angTxt=fmt(90+eDeg)+'°';
+  out.innerHTML=`
+  <div class="card">
+    <div class="sub">Anschlag verstellen um</div>
+    <div class="big">${fmt(adj)} mm</div>
+    <div class="dir">${endName} ${dirTxt}</div>
+    ${fenceSvg(pNear,up,fmt(adj)+' mm')}
+    <div class="sub">Winkel am Werkstück aktuell ${angTxt} (Fehler ${fmt(Math.abs(eDeg))}°) · Darstellung überhöht</div>
+  </div>
+  <div class="card" style="padding:6px 8px 8px">
+    <div class="sub" style="margin-bottom:4px">Abweichung von 90° – Schnittkante läuft ${obtuse?'nach außen (Winkel stumpf)':'nach innen (Winkel spitz)'}</div>
+    <div class="row">
+      <div class="card">${devSvg(obtuse)}<div class="cap">auf 100 mm<br><b>${fmt(d100)} mm</b></div></div>
+      <div class="card">${devSvg(obtuse)}<div class="cap">auf 1000 mm<br><b>${fmt(d1000)} mm</b></div></div>
+    </div>
+  </div>`;
+}
+
+load();
+F.forEach(k=>{const el=document.getElementById(k);el.value=st[k]||'';
+  el.addEventListener('input',()=>{st[k]=el.value;save();});});
+document.querySelectorAll('#seg button').forEach(b=>b.addEventListener('click',()=>{st.p=b.dataset.p;paintSeg();save();}));
+paintSeg();
+document.getElementById('calc').addEventListener('click',()=>{document.activeElement.blur();calc();});
+document.getElementById('printdate').textContent='Stand: '+new Date().toLocaleString('de-DE');
+</script>
+</body>
+</html>
