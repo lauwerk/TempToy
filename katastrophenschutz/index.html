@@ -153,7 +153,7 @@ details.grp .list{padding:0 14px 6px}
 "use strict";
 
 /* ============================================================
-   Vorlage: Soll-Zustand aus dem Projekt „Katastrophenschutz“ (Stand 17.11.2026)
+   Vorlage: Soll-Zustand aus dem Projekt „Katastrophenschutz“ (Stand 18.11.2026, Modelle entschieden)
    t: m = Menge zählen · p = prüfen (passt/Problem) · u = Aufgabe/Übung
    s: a = jeder Check · h = nur Herbst · f = nur Frühjahr
    i: Intervall in Monaten für Aufgaben (0 = einmalig)
@@ -175,10 +175,11 @@ var FELDER = [
 var VORLAGE = [
  // Trinkwasser
  {id:"w-wasser",f:"wasser",t:"m",n:"Stilles Wasser PET 1,5 l",soll:56,e:"Fl.",x:1,pp:1,o:"Keller",h:"Ältestes MHD eintragen. Erreicht ein Sixpack das MHD: zum Trinken freigeben und nachkaufen."},
- {id:"w-sack",f:"wasser",t:"m",n:"Badewannen-Wassersack mit Pumpe",soll:1,e:"Stk.",o:"Keller",h:"Im Ereignis sofort füllen, solange Wasser läuft."},
+ {id:"w-sack",f:"wasser",t:"m",n:"Badewannen-Wassersack AquaPodKit (mit Pumpe)",soll:1,e:"Stk.",o:"Keller",h:"Im Ereignis sofort füllen, solange Wasser läuft. Einweg-Sack: nach Gebrauch neuen kaufen, Pumpe behalten."},
  {id:"w-tape",f:"wasser",t:"m",n:"Panzertape (Wannenabfluss)",soll:1,e:"Rolle"},
  {id:"w-kanister",f:"wasser",t:"m",n:"Faltkanister 10 l",soll:4,e:"Stk.",o:"Keller"},
- {id:"w-filter",f:"wasser",t:"p",n:"Schwerkraftfilter: vorhanden, unbeschädigt, frostfrei gelagert",o:"Keller",h:"Hohlfaser filtert keine Viren → danach Micropur Forte."},
+ {id:"w-filter",f:"wasser",t:"p",n:"Katadyn BeFree Gravity 10 l: vorhanden, unbeschädigt, frostfrei gelagert",o:"Keller",h:"Hohlfaser filtert keine Viren → danach Micropur Forte. Filter hält ca. 1.000 l."},
+ {id:"w-filter1",f:"wasser",t:"p",n:"Katadyn BeFree 1,0 l im Familienrucksack vorhanden",h:"Frostempfindlich: Rucksack im Haus lagern. Filtert keine Viren."},
  {id:"w-forte",f:"wasser",t:"m",n:"Micropur Forte",soll:1,e:"Pck.",x:1},
  {id:"w-lage",f:"wasser",t:"p",n:"Lagerort: kühl, dunkel, keine Lösemittel daneben",o:"Keller"},
  {id:"w-gemeinde",f:"wasser",t:"u",i:0,n:"Klären: Notstrom der Wasserversorgung und Notbrunnen in Kleinostheim",h:"Gemeindewerke oder über die FF."},
@@ -191,7 +192,7 @@ var VORLAGE = [
  {id:"k-adapter",f:"waerme",t:"p",n:"Adapter vorhanden: Primus DIN-Combi + Burnhard Jones"},
  {id:"k-schlauch",f:"waerme",t:"p",s:"h",n:"Gasschläuche und Druckregler ohne Risse, Austauschdatum ok"},
  {id:"k-ofen",f:"waerme",t:"p",s:"h",n:"Gasheizofen: Probelauf, Zündung und Sauerstoffmangelsicherung ok",h:"Nie beim Schlafen betreiben, regelmäßig lüften."},
- {id:"k-co",f:"waerme",t:"p",x:1,n:"CO-Melder Wohnzimmer: Testknopf, Ablaufdatum",h:"Ablaufdatum des Melders als MHD eintragen."},
+ {id:"k-co",f:"waerme",t:"p",x:1,n:"CO-Melder X-Sense XC01-M (Wohnzimmer + Therme): Testknopf, Verbundalarm, Batterie in der App",h:"Löst alle Link+-Rauchmelder mit aus. Ablaufdatum des Sensors (10 Jahre) als MHD eintragen, Batterie ca. alle 5 Jahre tauschen."},
  {id:"k-sack",f:"waerme",t:"m",n:"Schlafsäcke Erwachsene",soll:2,e:"Stk.",pp:1},
  {id:"k-kindersack",f:"waerme",t:"p",s:"h",n:"Kinderschlafsack passt noch (Länge einstellen)",h:"Deuter Little Star 95–130 cm, danach Starlight 130–170 cm."},
  {id:"k-matten",f:"waerme",t:"p",n:"Isomatten/Matratzen und Decken für alle"},
@@ -200,13 +201,13 @@ var VORLAGE = [
  {id:"k-anz",f:"waerme",t:"m",n:"Kaminanzünder",soll:1,e:"Pck."},
  {id:"k-ueb",f:"waerme",t:"u",i:12,s:"h",n:"Übung Jasmin: Tupike an Flasche, Gasheizofen bedienen, Kamin anheizen"},
  // Strom & Licht
- {id:"s-ps",f:"strom",t:"p",n:"Powerstation: Ladestand, Ladelimit 80–90 %, Kühlschrank 1 h Probebetrieb"},
- {id:"s-solar",f:"strom",t:"p",s:"f",n:"Solarmodul aufgebaut, Ladeleistung geprüft"},
+ {id:"s-ps",f:"strom",t:"p",n:"Powerstation Anker C2000 Gen 2: Ladestand, Ladelimit 80–90 %, Abschaltautomatik aus, Kühlschrank 1 h Probebetrieb",h:"Steht im USV-Betrieb auf dem Möbelroller am Kühlschrank. Der Standby-Timer darf Kühlschrankpausen nicht abschalten."},
+ {id:"s-solar",f:"strom",t:"p",s:"f",n:"Solarmodul Anker PS400: aufgebaut, Ladeleistung notiert, Kabel und Stecker ok",h:"Frost-Regel: Modul abstecken, wenn der Akku voll ist (Leerlaufspannung nah an der 60-V-Grenze)."},
  {id:"s-kabel",f:"strom",t:"p",n:"Verlängerungskabel + Mehrfachsteckdose für den Kühlschrank"},
- {id:"s-not",f:"strom",t:"m",n:"Steckdosen-Notlichter funktionieren (Stecker ziehen → an?)",soll:5,e:"Stk."},
- {id:"s-stirn",f:"strom",t:"m",n:"Stirnlampen Erwachsene (geladen)",soll:2,e:"Stk."},
- {id:"s-kstirn",f:"strom",t:"m",n:"Kinder-Stirnlampe",soll:1,e:"Stk."},
- {id:"s-lat",f:"strom",t:"m",n:"LED-Laternen (geladen)",soll:2,e:"Stk."},
+ {id:"s-not",f:"strom",t:"m",n:"Notlichter TFA Lumatic Guard: Stecker ziehen → gehen an?",soll:5,e:"Stk.",h:"Flur/Treppe ×2, Schlafzimmer, Kinderzimmer, Keller. Leuchtdauer ca. 6–7 h."},
+ {id:"s-stirn",f:"strom",t:"m",n:"Stirnlampen Petzl Tikka Core (geladen)",soll:2,e:"Stk.",h:"Akku oder 3 × AAA."},
+ {id:"s-kstirn",f:"strom",t:"m",n:"Kinder-Stirnlampe Petzl Tikkid",soll:1,e:"Stk.",h:"3 × AAA oder Core-Akku."},
+ {id:"s-lat",f:"strom",t:"m",n:"Laternen Black Diamond Apollo (geladen)",soll:2,e:"Stk.",h:"Akku oder 3 × AA, auch als Powerbank nutzbar."},
  {id:"s-aa",f:"strom",t:"m",n:"Lithium-Batterien AA",soll:20,e:"Stk.",x:1},
  {id:"s-aaa",f:"strom",t:"m",n:"Lithium-Batterien AAA",soll:12,e:"Stk.",x:1},
  {id:"s-pb",f:"strom",t:"m",n:"Powerbanks geladen",soll:2,e:"Stk."},
@@ -259,9 +260,9 @@ var VORLAGE = [
  {id:"h-kurs",f:"hygiene",t:"u",i:24,n:"Kurs „Erste Hilfe am Kind“ (Jasmin)",h:"DRK, Malteser oder Johanniter; Auffrischung alle 2–3 Jahre."},
  // Information & Funk
  {id:"i-nina",f:"info",t:"p",n:"NINA auf beiden Handys geöffnet, Standort + Benachrichtigungen, Cell Broadcast an",h:"Warn-Apps deaktivieren sich nach Updates manchmal still."},
- {id:"i-radio",f:"info",t:"p",n:"Kurbelradio: geladen, Empfang ok, Kurbel funktioniert"},
- {id:"i-funk",f:"info",t:"p",n:"Funkgeräte: geladen, Kanal stimmt, Funkprobe Haus ↔ Straße"},
- {id:"i-ff",f:"info",t:"u",i:12,n:"Funkprobe Haus ↔ Feuerwehrhaus"},
+ {id:"i-radio",f:"info",t:"p",n:"Kurbelradio: Akku ok, Empfang ok, Kurbel funktioniert, steht auf der Fensterbank",h:"Auf der Fensterbank gleicht das Solarpanel die Selbstentladung aus."},
+ {id:"i-funk",f:"info",t:"p",n:"Funkgeräte Motorola T82: geladen, Kanal stimmt, Funkprobe Haus ↔ Straße",h:"Laufen auch mit 4 × AA."},
+ {id:"i-ff",f:"info",t:"u",i:12,n:"Funkprobe Haus ↔ Feuerwehrhaus",h:"0,5 W reichen knapp. Notfalls aus dem Obergeschoss-Fenster oder draußen funken."},
  {id:"i-freq",f:"info",t:"u",i:0,n:"UKW-Frequenzen der Regionalsender in die Notfallmappe"},
  // Kraftstoff
  {id:"f-kan",f:"kraftstoff",t:"p",n:"Benzinkanister ins Auto gefüllt und frisch mit Super E5 befüllt",o:"Garage",h:"So ist das Benzin nie älter als 6 Monate. Nicht randvoll füllen."},
@@ -270,7 +271,7 @@ var VORLAGE = [
  {id:"f-tank",f:"kraftstoff",t:"p",n:"Tankregel eingehalten: nie unter halb voll"},
  {id:"f-ueb",f:"kraftstoff",t:"u",i:12,n:"Übung Jasmin: aus dem Kanister ins Auto füllen"},
  // Sicherheit
- {id:"x-rauch",f:"sicherheit",t:"p",n:"Rauchmelder: Testknopf bei allen"},
+ {id:"x-rauch",f:"sicherheit",t:"p",n:"Rauchmelder X-Sense Link+: Testknopf bei allen, Batteriestand in der App"},
  {id:"x-loesch",f:"sicherheit",t:"m",n:"Feuerlöscher (Plombe, Manometer im grünen Bereich)",soll:3,e:"Stk.",x:1,h:"Nächstes Wartungsdatum als MHD eintragen."},
  {id:"x-decke",f:"sicherheit",t:"p",n:"Löschdecke in der Küche"},
  {id:"x-spray",f:"sicherheit",t:"m",n:"Tierabwehrspray (kindersicher)",soll:2,e:"Stk.",x:1},
@@ -284,7 +285,7 @@ var VORLAGE = [
  {id:"p-licht",f:"psyche",t:"p",n:"LED-Kerzen/Lichterkette + Batterien"},
  {id:"p-medien",f:"psyche",t:"p",n:"Offline-Hörspiele und Medien (Tablet befüllt, Figuren da)"},
  // Dokumente & Absprachen
- {id:"d-box",f:"doku",t:"p",n:"Dokumentenbox: Dokumente aktuell (Ausweise gültig?), Scans aktuell"},
+ {id:"d-box",f:"doku",t:"p",n:"Dokumentenbox Master Lock: Dokumente aktuell (Ausweise gültig?), Scans und USB-Stick aktuell, beide Schlüssel da",h:"14 kg: zu Fuß nur die Originale und den USB-Stick mitnehmen."},
  {id:"d-geld",f:"doku",t:"m",n:"Bargeld in kleinen Scheinen und Münzen",soll:200,st:10,e:"€",h:"Ca. 50 € davon im Familienrucksack."},
  {id:"d-ruck",f:"doku",t:"p",n:"Familienrucksack: Wasser/Riegel-MHD, Powerbank, Batterien, Wechselwäsche Amelie passt"},
  {id:"d-pack",f:"doku",t:"p",n:"Packliste und Notfallmappe aktuell (Nummern, Anleitungen)"},
@@ -293,15 +294,19 @@ var VORLAGE = [
  {id:"d-evak",f:"doku",t:"u",i:12,n:"Übung „Evakuierung in 10 Minuten“"}
 ];
 
+// Vorlagen-Version: Texte bestehender Positionen nur ersetzen, wenn Kevin sie nicht geändert hat
+var VORLAGE_V = 2;
+var VORLAGE_ALT = {2:{"items": {"w-sack": {"n": "Badewannen-Wassersack mit Pumpe", "h": "Im Ereignis sofort füllen, solange Wasser läuft."}, "w-filter": {"n": "Schwerkraftfilter: vorhanden, unbeschädigt, frostfrei gelagert", "h": "Hohlfaser filtert keine Viren → danach Micropur Forte."}, "k-co": {"n": "CO-Melder Wohnzimmer: Testknopf, Ablaufdatum", "h": "Ablaufdatum des Melders als MHD eintragen."}, "s-ps": {"n": "Powerstation: Ladestand, Ladelimit 80–90 %, Kühlschrank 1 h Probebetrieb", "h": null}, "s-solar": {"n": "Solarmodul aufgebaut, Ladeleistung geprüft", "h": null}, "s-not": {"n": "Steckdosen-Notlichter funktionieren (Stecker ziehen → an?)", "h": null}, "s-stirn": {"n": "Stirnlampen Erwachsene (geladen)", "h": null}, "s-kstirn": {"n": "Kinder-Stirnlampe", "h": null}, "s-lat": {"n": "LED-Laternen (geladen)", "h": null}, "i-radio": {"n": "Kurbelradio: geladen, Empfang ok, Kurbel funktioniert", "h": null}, "i-funk": {"n": "Funkgeräte: geladen, Kanal stimmt, Funkprobe Haus ↔ Straße", "h": null}, "i-ff": {"h": null}, "x-rauch": {"n": "Rauchmelder: Testknopf bei allen"}, "d-box": {"n": "Dokumentenbox: Dokumente aktuell (Ausweise gültig?), Scans aktuell", "h": null}}, "mappe": {"anl": "Powerstation: Hauptschalter, dann AC-Ausgang ein. Kühlschrank über Verlängerung anschließen. Winter: Kühlschrank aus lassen, Kühles auf die Terrasse.\nSolarmodul: aufklappen, zur Sonne ausrichten, MC4-Kabel an den Solareingang.\nTupike: DIN-Combi-Adapter an die 11-kg-Flasche (Linksgewinde), Ventil auf, zünden. Nur draußen!\nGasheizofen: Flasche einsetzen, Regler F1-t, zünden, 4,2 kW aufheizen, dann klein. Vor dem Schlafen aus. Stündlich kurz lüften.\nWassersack: in die leere Wanne legen, Schlauch an den Hahn, füllen. Wasser mit der Pumpe entnehmen.\nWasserfilter: oben füllen, aufhängen, durchlaufen lassen. Danach Micropur Forte nach Packung.\nToilette: Beutel über die Schüssel, Bindemittel hinein, nach Gebrauch verknoten, in die Mülltonne.", "funk": "PMR446-Kanal: ___  Code: ___\nRufzeiten: zur vollen Stunde, 2 Minuten\nUKW-Sender (Frequenz):\n- \n- \nWarn-App: NINA (Standort Kleinostheim)", "pack": "Familienrucksack (fertig gepackt): Notriegel 3 Tagesrationen, 2 × Wasser 1,5 l, Erste-Hilfe-Set, Rettungsdecken, Stirnlampe + Batterien, Powerbank + Kabel, Einweg-Unterwäsche, Wechselwäsche Amelie, Hygiene-Set, Regenponchos, Taschenmesser, Feuerzeug, Panzertape, Müllbeutel, Kopie dieser Mappe, kleines Spiel, ca. 50 € Bargeld\n\nAus dem Alltag mitnehmen:\n[ ] Dokumentenbox\n[ ] Handys + Ladekabel, Geldbörsen, Schlüssel\n[ ] Persönliche Medikamente\n[ ] Amelies Kuscheltier\n[ ] Brillen\n[ ] Jacken, feste Schuhe, Mützen\n[ ] Schlafsäcke (Kinderschlafsack!)\n[ ] Funkgeräte\n[ ] Bei Zeit: Kurbelradio, Hygiene-Box", "erste": "1. Ruhig bleiben, Stirnlampe nehmen (Notlichter gehen von selbst an)\n2. Nur wir oder die ganze Straße? Nachbarn, Straßenlaternen prüfen\n3. Radio (UKW) an, NINA prüfen, solange das Netz noch geht\n4. Wassersack in die Wanne und füllen, Faltkanister füllen, solange Wasser läuft\n5. Kühl- und Gefrierschrank geschlossen halten\n6. Empfindliche Geräte ausstecken, eine Lampe eingeschaltet lassen (zeigt, wann der Strom zurück ist)\n7. Oma/Opa nebenan Bescheid geben\n8. Powerstation: Ladestand prüfen, nur Nötiges anschließen\n9. Im Winter: Wohnzimmer als Wärmeinsel, Türen zu, Gasheizofen/Kamin, CO-Melder an\n10. Auto nicht unnötig bewegen (Tank ist halb voll)\n11. Notruf geht nicht? → Leuchtturm Feuerwehrhaus"}}};
+
 var MAPPE = [
  {id:"kontakte",n:"Wichtige Telefonnummern",v:"Notruf Feuerwehr/Rettung: 112\nPolizei: 110\nKevin: \nJasmin: \nOma/Opa (nebenan): \nKita St. Markus: \nHausarzt: \nKinderarzt: \nVermieter: \nGiftinformationszentrum: \nVersicherung (Hausrat): "},
  {id:"treff",n:"Treffpunkte und Abholung",v:"Wenn wir getrennt sind und das Handynetz ausfällt:\n1. Bei Oma/Opa nebenan\n2. Leuchtturm: Feuerwehrhaus Kleinostheim (Notruf, Informationen)\n3. Ausweichort außerhalb: (noch klären)\n\nKita-Abholung: Jasmin → Kevin → Oma/Opa (alle abholberechtigt)\n\nIst Kevin im Einsatz: Jasmin entscheidet. Erste Hilfe: Oma/Opa, dann Leuchtturm."},
- {id:"funk",n:"Funk und Radio",v:"PMR446-Kanal: ___  Code: ___\nRufzeiten: zur vollen Stunde, 2 Minuten\nUKW-Sender (Frequenz):\n- \n- \nWarn-App: NINA (Standort Kleinostheim)"},
+ {id:"funk",n:"Funk und Radio",v:"PMR446-Kanal (Motorola T82): ___  Code: ___\nRufzeiten: zur vollen Stunde, 2 Minuten\nUKW-Sender (Frequenz):\n- \n- \nWarn-App: NINA (Standort Kleinostheim)"},
  {id:"haus",n:"Haus-Technik",v:"Wasser-Haupthahn: (Ort beschreiben, Foto)\nGas-Haupthahn: (Ort beschreiben, Foto)\nSicherungskasten/FI: (Ort beschreiben, Foto)\n\nGasflaschen: Gartenhütte. Nie im Keller lagern."},
- {id:"erste",n:"Erste Stunde Stromausfall",v:"1. Ruhig bleiben, Stirnlampe nehmen (Notlichter gehen von selbst an)\n2. Nur wir oder die ganze Straße? Nachbarn, Straßenlaternen prüfen\n3. Radio (UKW) an, NINA prüfen, solange das Netz noch geht\n4. Wassersack in die Wanne und füllen, Faltkanister füllen, solange Wasser läuft\n5. Kühl- und Gefrierschrank geschlossen halten\n6. Empfindliche Geräte ausstecken, eine Lampe eingeschaltet lassen (zeigt, wann der Strom zurück ist)\n7. Oma/Opa nebenan Bescheid geben\n8. Powerstation: Ladestand prüfen, nur Nötiges anschließen\n9. Im Winter: Wohnzimmer als Wärmeinsel, Türen zu, Gasheizofen/Kamin, CO-Melder an\n10. Auto nicht unnötig bewegen (Tank ist halb voll)\n11. Notruf geht nicht? → Leuchtturm Feuerwehrhaus"},
- {id:"anl",n:"Kurzanleitungen",v:"Powerstation: Hauptschalter, dann AC-Ausgang ein. Kühlschrank über Verlängerung anschließen. Winter: Kühlschrank aus lassen, Kühles auf die Terrasse.\nSolarmodul: aufklappen, zur Sonne ausrichten, MC4-Kabel an den Solareingang.\nTupike: DIN-Combi-Adapter an die 11-kg-Flasche (Linksgewinde), Ventil auf, zünden. Nur draußen!\nGasheizofen: Flasche einsetzen, Regler F1-t, zünden, 4,2 kW aufheizen, dann klein. Vor dem Schlafen aus. Stündlich kurz lüften.\nWassersack: in die leere Wanne legen, Schlauch an den Hahn, füllen. Wasser mit der Pumpe entnehmen.\nWasserfilter: oben füllen, aufhängen, durchlaufen lassen. Danach Micropur Forte nach Packung.\nToilette: Beutel über die Schüssel, Bindemittel hinein, nach Gebrauch verknoten, in die Mülltonne."},
+ {id:"erste",n:"Erste Stunde Stromausfall",v:"1. Ruhig bleiben, Stirnlampe nehmen (Notlichter gehen von selbst an)\n2. Nur wir oder die ganze Straße? Nachbarn, Straßenlaternen prüfen\n3. Radio (UKW) an, NINA prüfen, solange das Netz noch geht\n4. Wassersack in die Wanne und füllen, Faltkanister füllen, solange Wasser läuft\n5. Kühl- und Gefrierschrank geschlossen halten\n6. Empfindliche Geräte ausstecken, eine Lampe eingeschaltet lassen (zeigt, wann der Strom zurück ist)\n7. Oma/Opa nebenan Bescheid geben\n8. Powerstation: läuft am Kühlschrank von selbst weiter. Ladestand prüfen, nur Nötiges anschließen\n9. Im Winter: Wohnzimmer als Wärmeinsel, Türen zu, Gasheizofen/Kamin, CO-Melder an\n10. Auto nicht unnötig bewegen (Tank ist halb voll)\n11. Notruf geht nicht? → Leuchtturm Feuerwehrhaus"},
+ {id:"anl",n:"Kurzanleitungen",v:"Powerstation (Anker C2000 Gen 2): hängt am Kühlschrank und läuft bei Stromausfall von selbst weiter. Winter: Kühlschrank-Stecker ziehen, Kühles auf die Terrasse, Station auf dem Roller ins Wohnzimmer. Einschalten: Hauptschalter, dann AC-Ausgang.\nSolarmodul (Anker PS400): aufklappen, Aufsteller ausklappen, nach Süden zur Sonne, MC4-Kabel + XT-60-Adapter an den Solareingang. Bei Frost abstecken, wenn der Akku voll ist.\nTupike: DIN-Combi-Adapter an die 11-kg-Flasche (Linksgewinde), Ventil auf, zünden. Nur draußen!\nGasheizofen: Flasche einsetzen, Regler F1-t, zünden, 4,2 kW aufheizen, dann klein. Vor dem Schlafen aus. Stündlich kurz lüften.\nWassersack (AquaPodKit): in die leere Wanne legen, Schlauch an den Hahn, füllen. Wasser mit der Pumpe entnehmen.\nWasserfilter (Katadyn BeFree Gravity): oben füllen, aufhängen, durchlaufen lassen. Danach Micropur Forte nach Packung.\nToilette: Beutel über die Schüssel, Bindemittel hinein, nach Gebrauch verknoten, in die Mülltonne.\nCO-Alarm (alle Melder heulen): Gasheizofen aus, Fenster auf, alle raus, 112."},
  {id:"tag",n:"Notfall-Tagesplan",v:"7:30  Aufstehen, anziehen, Frühstück (Müsli, Knäckebrot)\n9:00  Aufgaben: Wasser holen, Holz holen, aufräumen (Amelie hilft)\n10:00 Radio-Nachrichten (nicht vor Amelie dauerhaft laufen lassen)\n10:30 Spielen, Malen, Überraschungsbox (ein Teil pro Tag)\n12:00 Warmes Mittagessen (Tupike, draußen)\n13:00 Ruhezeit, Vorlesen\n15:00 Draußen bewegen, Oma/Opa besuchen\n17:00 Wärmeinsel vorbereiten, Licht an\n18:00 Abendessen\n19:00 Familienspiel, Hörspiel\n20:00 Amelie schläft; Gasheizofen aus, lüften"},
- {id:"pack",n:"Packliste Evakuierung",v:"Familienrucksack (fertig gepackt): Notriegel 3 Tagesrationen, 2 × Wasser 1,5 l, Erste-Hilfe-Set, Rettungsdecken, Stirnlampe + Batterien, Powerbank + Kabel, Einweg-Unterwäsche, Wechselwäsche Amelie, Hygiene-Set, Regenponchos, Taschenmesser, Feuerzeug, Panzertape, Müllbeutel, Kopie dieser Mappe, kleines Spiel, ca. 50 € Bargeld\n\nAus dem Alltag mitnehmen:\n[ ] Dokumentenbox\n[ ] Handys + Ladekabel, Geldbörsen, Schlüssel\n[ ] Persönliche Medikamente\n[ ] Amelies Kuscheltier\n[ ] Brillen\n[ ] Jacken, feste Schuhe, Mützen\n[ ] Schlafsäcke (Kinderschlafsack!)\n[ ] Funkgeräte\n[ ] Bei Zeit: Kurbelradio, Hygiene-Box"}
+ {id:"pack",n:"Packliste Evakuierung",v:"Familienrucksack (fertig gepackt): Notriegel 3 Tagesrationen, 2 × Wasser 1,5 l, Erste-Hilfe-Set, Rettungsdecken, Stirnlampe + Batterien, Powerbank + Kabel, Wasserfilter BeFree 1,0 l, Einweg-Unterwäsche, Wechselwäsche Amelie, Hygiene-Set, Regenponchos, Taschenmesser, Feuerzeug, Panzertape, Müllbeutel, Kopie dieser Mappe, kleines Spiel, ca. 50 € Bargeld\n\nAus dem Alltag mitnehmen:\n[ ] Dokumentenbox (Auto) bzw. Originale + USB-Stick daraus (zu Fuß)\n[ ] Handys + Ladekabel, Geldbörsen, Schlüssel\n[ ] Persönliche Medikamente\n[ ] Amelies Kuscheltier\n[ ] Brillen\n[ ] Jacken, feste Schuhe, Mützen\n[ ] Schlafsäcke (Kinderschlafsack!)\n[ ] Funkgeräte (Motorola T82)\n[ ] Bei Zeit: Kurbelradio, Hygiene-Box"}
 ];
 
 /* ============================================================
@@ -312,7 +317,7 @@ var state, readOnly = false, view = "home", checkMode = "karte", editId = null;
 
 function deep(o){ return JSON.parse(JSON.stringify(o)); }
 function frisch(){
-  return {v:1, t:Date.now(), name:"Unser Haushalt", personen:3, tage:14,
+  return {v:1, vv:VORLAGE_V, t:Date.now(), name:"Unser Haushalt", personen:3, tage:14,
     items: VORLAGE.map(function(it){ var c = deep(it); c.ist = null; c.mhd = null; c.ok = null; c.last = null; c.notiz = ""; return c; }),
     mappe: MAPPE.map(function(m){ return {id:m.id, n:m.n, v:m.v}; }),
     session: null, verlauf: [], erledigt: {}};
@@ -415,6 +420,21 @@ function migrate(s){
   if(!s.entfernt) s.entfernt = {};
   VORLAGE.forEach(function(v){ if(!have[v.id] && !s.entfernt[v.id]){ var c = deep(v); c.ist=null; c.mhd=null; c.ok=null; c.last=null; c.notiz=""; s.items.push(c); } });
   if(!s.mappe) s.mappe = MAPPE.map(function(m){ return {id:m.id,n:m.n,v:m.v}; });
+  var vv = s.vv || 1;
+  for(var ver = vv + 1; ver <= VORLAGE_V; ver++){
+    var alt = VORLAGE_ALT[ver]; if(!alt) continue;
+    s.items.forEach(function(it){
+      var a = alt.items[it.id]; if(!a) return;
+      var v = VORLAGE.filter(function(x){ return x.id === it.id; })[0]; if(!v) return;
+      Object.keys(a).forEach(function(k){ if((it[k] || null) === a[k]) it[k] = v[k]; });
+    });
+    s.mappe.forEach(function(m){
+      var a = alt.mappe[m.id]; if(a === undefined) return;
+      var v = MAPPE.filter(function(x){ return x.id === m.id; })[0];
+      if(v && m.v === a) m.v = v.v;
+    });
+  }
+  s.vv = VORLAGE_V;
   if(!s.verlauf) s.verlauf = [];
   if(!s.personen) s.personen = 3;
   return s;
