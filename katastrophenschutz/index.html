@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Katastrophenschutz-Vorsorge</title>
+<meta name="tool-icon" content="🔦">
+<meta name="theme-color" content="#1c2326">
+<link rel="stylesheet" href="../print.css" media="print">
+<style>
+/* Plan: ruhige Werkstatt-Optik, Signalorange als einziger Akzent; eine Spalte, unten Tab-Leiste; Karten mit Ampel-Streifen */
+:root{
+  --bg:#f2f3f1; --card:#ffffff; --tx:#1c2326; --mu:#5f6a6f; --ln:#dadfdc;
+  --ac:#d9480f; --ac-soft:#fde7da;
+  --ok:#2e7d4f; --ok-soft:#dcf0e3; --warn:#a96800; --warn-soft:#fbefd0; --bad:#c62828; --bad-soft:#fbe1df; --neu:#8a9397; --neu-soft:#eceeed;
+  --tab:#ffffff;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#111517; --card:#1b2124; --tx:#e8ecec; --mu:#9aa5aa; --ln:#2c3438;
+  --ac:#ff7a3d; --ac-soft:#3a2418;
+  --ok:#5cc98a; --ok-soft:#163023; --warn:#e2a93b; --warn-soft:#33270f; --bad:#ff6b63; --bad-soft:#3a1816; --neu:#7f898d; --neu-soft:#242b2e;
+  --tab:#171c1e;
+}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--tx);font:15px/1.4 var(--font);-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;padding:max(12px,env(safe-area-inset-top)) 16px calc(84px + env(safe-area-inset-bottom))}
+h1{font-size:22px;margin:4px 0 2px;letter-spacing:-.01em}
+h2{font-size:17px;margin:18px 0 8px}
+h3{font-size:15px;margin:0}
+p{margin:0 0 8px}
+.mu{color:var(--mu)}
+.sm{font-size:13px}
+.xs{font-size:12px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:14px;margin-bottom:10px}
+.btn{border:1px solid var(--ln);background:var(--card);border-radius:10px;padding:10px 14px;font-weight:600;font-size:14px}
+.btn.pri{background:var(--ac);border-color:var(--ac);color:#fff}
+.btn.big{width:100%;padding:14px;font-size:16px;border-radius:12px}
+.btn.ghost{background:none}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:8px;align-items:center}
+.row.wrapr{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;border-radius:99px;padding:2px 8px;white-space:nowrap}
+.s-ok{background:var(--ok-soft);color:var(--ok)}
+.s-bald,.s-neu.warnish{background:var(--warn-soft);color:var(--warn)}
+.s-fehlt,.s-ablauf,.s-problem{background:var(--bad-soft);color:var(--bad)}
+.s-neu{background:var(--neu-soft);color:var(--mu)}
+.s-faellig{background:var(--warn-soft);color:var(--warn)}
+/* Kopf */
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ro-banner{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;margin:8px 0}
+/* Übersicht */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.ring{width:84px;height:84px}
+.ring text{font:700 20px var(--font);fill:var(--tx)}
+.next{border-left:4px solid var(--ac)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fld{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:10px 12px 10px 14px;position:relative;text-align:left;width:100%}
+.fld::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:4px;border-radius:0 4px 4px 0;background:var(--neu)}
+.fld.ok::before{background:var(--ok)} .fld.warn::before{background:var(--warn)} .fld.bad::before{background:var(--bad)}
+.fld b{display:block;font-size:14px}
+.fld span{font-size:12px;color:var(--mu)}
+.stats{display:flex;gap:8px}
+.stat{flex:1;background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:10px;text-align:left}
+.stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--mu)}
+/* Check */
+.prog{height:6px;background:var(--neu-soft);border-radius:99px;overflow:hidden;margin:6px 0 12px}
+.prog i{display:block;height:100%;background:var(--ac);transition:width .25s}
+.ccard{min-height:300px;display:flex;flex-direction:column;gap:12px}
+.ccard .feld{font-size:12px;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:.06em}
+.ccard h3{font-size:20px;line-height:1.25}
+.hint{background:var(--neu-soft);border-radius:10px;padding:8px 10px;font-size:13px;color:var(--mu)}
+.stepper{display:grid;grid-template-columns:56px 1fr 56px;gap:8px;align-items:center}
+.stepper button{height:56px;border-radius:12px;border:1px solid var(--ln);background:var(--card);font-size:26px;font-weight:600}
+.stepper output{text-align:center;font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+.stepper output small{display:block;font-size:12px;font-weight:500;color:var(--mu)}
+.mhd{display:flex;gap:8px;align-items:center}
+.mhd label{font-size:13px;color:var(--mu);flex:none}
+.mhd input{flex:1;min-width:0;padding:9px 10px;border:1px solid var(--ln);border-radius:10px;background:var(--card)}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choice button{padding:16px 8px;border-radius:12px;border:1px solid var(--ln);background:var(--card);font-weight:700;font-size:15px}
+.choice button.on.okb{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.choice button.on.badb{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.nav{display:grid;grid-template-columns:1fr 2fr;gap:8px;margin-top:auto}
+.seg{display:flex;border:1px solid var(--ln);border-radius:10px;overflow:hidden;background:var(--card)}
+.seg button{flex:1;border:0;background:none;padding:8px;font-size:13px;font-weight:600}
+.seg button.on{background:var(--tx);color:var(--bg)}
+/* Listen */
+.list .it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:10px 0;border-top:1px solid var(--ln);align-items:center}
+.list .it:first-child{border-top:0}
+.it .nm{font-weight:600}
+.it .meta{font-size:12.5px;color:var(--mu)}
+.mini{display:flex;align-items:center;gap:4px}
+.mini button{width:34px;height:34px;border-radius:9px;border:1px solid var(--ln);background:var(--card);font-weight:700}
+.mini button.tick{width:auto;padding:0 10px}
+.mini output{min-width:34px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.tick{padding:7px 10px;border-radius:9px;border:1px solid var(--ln);background:var(--card);font-weight:700;font-size:13px}
+.tick.on{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.tick.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+details.grp{background:var(--card);border:1px solid var(--ln);border-radius:14px;margin-bottom:10px}
+details.grp>summary{list-style:none;padding:12px 14px;display:flex;gap:8px;align-items:center;font-weight:700;cursor:pointer}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::after{content:"›";margin-left:auto;color:var(--mu);font-size:20px;line-height:1;transition:transform .2s}
+details.grp[open]>summary::after{transform:rotate(90deg)}
+details.grp .list{padding:0 14px 6px}
+/* Formulare */
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-size:12.5px;color:var(--mu);font-weight:600}
+.field input,.field select,.field textarea{width:100%;padding:10px;border:1px solid var(--ln);border-radius:10px;background:var(--card)}
+.field textarea{min-height:120px;resize:vertical;font-size:14px;line-height:1.45}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* Tab-Leiste */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--tab);border-top:1px solid var(--ln);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:20}
+.tabs .in{display:grid;grid-template-columns:repeat(5,1fr);width:100%;max-width:560px}
+.tabs button{border:0;background:none;padding:8px 2px 9px;font-size:11px;font-weight:600;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
+.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs button.on{color:var(--ac)}
+.badge{position:absolute;top:3px;left:calc(50% + 6px);background:var(--bad);color:#fff;border-radius:99px;font-size:10px;padding:0 5px;min-width:16px;line-height:16px}
+.toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.dialog{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:40}
+.dialog .sheet{background:var(--bg);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+.empty{text-align:center;padding:24px 10px;color:var(--mu)}
+.printonly{display:none}
+.mappe-pg h3{margin-top:12px}
+.mappe-pg pre{white-space:pre-wrap;font:14px/1.5 var(--font);margin:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  .tabs,.toast,.no-print,.dialog{display:none!important}
+  .wrap{padding:0}
+  .card{border:1px solid #ccc!important;break-inside:avoid}
+  .pg{break-inside:avoid}
+  .pg-neu{break-before:page}
+  .printonly{display:block!important}
+  details.grp{border:0}
+  details.grp>summary::after{display:none}
+}
+</style>
+</head>
+<body>
+<main class="wrap" id="app"></main>
+<nav class="tabs no-print" id="tabs" aria-label="Bereiche"></nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   Vorlage: Soll-Zustand aus dem Projekt „Katastrophenschutz“ (Stand 17.11.2026)
+   t: m = Menge zählen · p = prüfen (passt/Problem) · u = Aufgabe/Übung
+   s: a = jeder Check · h = nur Herbst · f = nur Frühjahr
+   i: Intervall in Monaten für Aufgaben (0 = einmalig)
+   x: MHD/Ablaufdatum erfassen · pp: Menge skaliert mit Personen · st: Schrittweite
+   ============================================================ */
+var FELDER = [
+  {id:"wasser", n:"Trinkwasser"},
+  {id:"waerme", n:"Wärme & Kochen"},
+  {id:"strom", n:"Strom & Licht"},
+  {id:"essen", n:"Lebensmittel"},
+  {id:"hygiene", n:"Hygiene & Gesundheit"},
+  {id:"info", n:"Information & Funk"},
+  {id:"kraftstoff", n:"Kraftstoff"},
+  {id:"sicherheit", n:"Sicherheit"},
+  {id:"psyche", n:"Psyche & Beschäftigung"},
+  {id:"doku", n:"Dokumente & Absprachen"}
+];
+
+var VORLAGE = [
+ // Trinkwasser
+ {id:"w-wasser",f:"wasser",t:"m",n:"Stilles Wasser PET 1,5 l",soll:56,e:"Fl.",x:1,pp:1,o:"Keller",h:"Ältestes MHD eintragen. Erreicht ein Sixpack das MHD: zum Trinken freigeben und nachkaufen."},
+ {id:"w-sack",f:"wasser",t:"m",n:"Badewannen-Wassersack mit Pumpe",soll:1,e:"Stk.",o:"Keller",h:"Im Ereignis sofort füllen, solange Wasser läuft."},
+ {id:"w-tape",f:"wasser",t:"m",n:"Panzertape (Wannenabfluss)",soll:1,e:"Rolle"},
+ {id:"w-kanister",f:"wasser",t:"m",n:"Faltkanister 10 l",soll:4,e:"Stk.",o:"Keller"},
+ {id:"w-filter",f:"wasser",t:"p",n:"Schwerkraftfilter: vorhanden, unbeschädigt, frostfrei gelagert",o:"Keller",h:"Hohlfaser filtert keine Viren → danach Micropur Forte."},
+ {id:"w-forte",f:"wasser",t:"m",n:"Micropur Forte",soll:1,e:"Pck.",x:1},
+ {id:"w-lage",f:"wasser",t:"p",n:"Lagerort: kühl, dunkel, keine Lösemittel daneben",o:"Keller"},
+ {id:"w-gemeinde",f:"wasser",t:"u",i:0,n:"Klären: Notstrom der Wasserversorgung und Notbrunnen in Kleinostheim",h:"Gemeindewerke oder über die FF."},
+ {id:"w-ueb",f:"wasser",t:"u",i:12,n:"Übung Jasmin: Wassersack einlegen, Filter aufbauen"},
+ // Wärme & Kochen
+ {id:"k-gas",f:"waerme",t:"m",n:"Propan 11 kg Reserve, voll",soll:2,e:"Fl.",o:"Gartenhütte",h:"Eine zum Kochen, eine zum Heizen. Wird eine angeschlossen: sofort neue holen. Nie in den Keller."},
+ {id:"k-angeschl",f:"waerme",t:"p",s:"h",n:"Angeschlossene Flaschen (Grill, Pizzaofen): Füllstand grob geprüft"},
+ {id:"k-holz",f:"waerme",t:"m",n:"Brennholz, ofenfertig 30 cm",soll:1,min:0.7,st:0.1,e:"RM",o:"Carport",h:"Unter 0,7 RM nachbestellen."},
+ {id:"k-kart",f:"waerme",t:"m",n:"Schraubkartuschen",soll:5,min:4,e:"Stk."},
+ {id:"k-adapter",f:"waerme",t:"p",n:"Adapter vorhanden: Primus DIN-Combi + Burnhard Jones"},
+ {id:"k-schlauch",f:"waerme",t:"p",s:"h",n:"Gasschläuche und Druckregler ohne Risse, Austauschdatum ok"},
+ {id:"k-ofen",f:"waerme",t:"p",s:"h",n:"Gasheizofen: Probelauf, Zündung und Sauerstoffmangelsicherung ok",h:"Nie beim Schlafen betreiben, regelmäßig lüften."},
+ {id:"k-co",f:"waerme",t:"p",x:1,n:"CO-Melder Wohnzimmer: Testknopf, Ablaufdatum",h:"Ablaufdatum des Melders als MHD eintragen."},
+ {id:"k-sack",f:"waerme",t:"m",n:"Schlafsäcke Erwachsene",soll:2,e:"Stk.",pp:1},
+ {id:"k-kindersack",f:"waerme",t:"p",s:"h",n:"Kinderschlafsack passt noch (Länge einstellen)",h:"Deuter Little Star 95–130 cm, danach Starlight 130–170 cm."},
+ {id:"k-matten",f:"waerme",t:"p",n:"Isomatten/Matratzen und Decken für alle"},
+ {id:"k-feuerz",f:"waerme",t:"m",n:"Stabfeuerzeuge",soll:2,e:"Stk."},
+ {id:"k-streich",f:"waerme",t:"m",n:"Sturmstreichhölzer",soll:1,e:"Pck."},
+ {id:"k-anz",f:"waerme",t:"m",n:"Kaminanzünder",soll:1,e:"Pck."},
+ {id:"k-ueb",f:"waerme",t:"u",i:12,s:"h",n:"Übung Jasmin: Tupike an Flasche, Gasheizofen bedienen, Kamin anheizen"},
+ // Strom & Licht
+ {id:"s-ps",f:"strom",t:"p",n:"Powerstation: Ladestand, Ladelimit 80–90 %, Kühlschrank 1 h Probebetrieb"},
+ {id:"s-solar",f:"strom",t:"p",s:"f",n:"Solarmodul aufgebaut, Ladeleistung geprüft"},
+ {id:"s-kabel",f:"strom",t:"p",n:"Verlängerungskabel + Mehrfachsteckdose für den Kühlschrank"},
+ {id:"s-not",f:"strom",t:"m",n:"Steckdosen-Notlichter funktionieren (Stecker ziehen → an?)",soll:5,e:"Stk."},
+ {id:"s-stirn",f:"strom",t:"m",n:"Stirnlampen Erwachsene (geladen)",soll:2,e:"Stk."},
+ {id:"s-kstirn",f:"strom",t:"m",n:"Kinder-Stirnlampe",soll:1,e:"Stk."},
+ {id:"s-lat",f:"strom",t:"m",n:"LED-Laternen (geladen)",soll:2,e:"Stk."},
+ {id:"s-aa",f:"strom",t:"m",n:"Lithium-Batterien AA",soll:20,e:"Stk.",x:1},
+ {id:"s-aaa",f:"strom",t:"m",n:"Lithium-Batterien AAA",soll:12,e:"Stk.",x:1},
+ {id:"s-pb",f:"strom",t:"m",n:"Powerbanks geladen",soll:2,e:"Stk."},
+ {id:"s-label",f:"strom",t:"u",i:0,n:"Energielabel Kühl-Gefrier-Kombi ablesen (kWh/Jahr)"},
+ {id:"s-ueb",f:"strom",t:"u",i:12,n:"Übung Jasmin: Powerstation einschalten, Kühlschrank und Solar anschließen"},
+ // Lebensmittel (rotierend: älteste zuerst)
+ {id:"l-nudeln",f:"essen",t:"m",n:"Nudeln 500 g",soll:10,e:"Pck.",x:1,pp:1},
+ {id:"l-reis",f:"essen",t:"m",n:"Reis 500 g",soll:4,e:"Pck.",x:1,pp:1},
+ {id:"l-hafer",f:"essen",t:"m",n:"Haferflocken/Müsli 500 g",soll:4,e:"Pck.",x:1,pp:1},
+ {id:"l-knaeck",f:"essen",t:"m",n:"Knäckebrot/Zwieback 250 g",soll:8,e:"Pck.",x:1,pp:1},
+ {id:"l-dosen",f:"essen",t:"m",n:"Dosengemüse 400 g",soll:20,e:"Dosen",x:1,pp:1},
+ {id:"l-eint",f:"essen",t:"m",n:"Eintöpfe/Fertiggerichte/Suppen",soll:14,e:"Stk.",x:1,pp:1},
+ {id:"l-obst",f:"essen",t:"m",n:"Lagerobst (Äpfel, Orangen)",soll:3,st:0.5,e:"kg",pp:1},
+ {id:"l-quetsch",f:"essen",t:"m",n:"Quetschies",soll:20,e:"Stk.",x:1},
+ {id:"l-saft",f:"essen",t:"m",n:"Saft 1 l",soll:6,e:"Pck.",x:1,pp:1},
+ {id:"l-milch",f:"essen",t:"m",n:"H-Milch 1 l",soll:8,e:"Pck.",x:1,pp:1},
+ {id:"l-wurst",f:"essen",t:"m",n:"Dauerwurst (Salami, Landjäger)",soll:4,e:"Stk.",x:1,pp:1},
+ {id:"l-fleisch",f:"essen",t:"m",n:"Fleischkonserven/Würstchen im Glas",soll:6,e:"Stk.",x:1,pp:1},
+ {id:"l-erdnuss",f:"essen",t:"m",n:"Erdnussbutter",soll:2,e:"Gl.",x:1},
+ {id:"l-eier",f:"essen",t:"m",n:"Eier (Alltagsbestand)",soll:10,e:"Stk."},
+ {id:"l-oel",f:"essen",t:"m",n:"Speiseöl 1 l",soll:1,e:"Fl.",x:1},
+ {id:"l-aufstr",f:"essen",t:"m",n:"Marmelade, Honig, Nuss-Nougat-Creme",soll:4,e:"Gl.",x:1},
+ {id:"l-kaffee",f:"essen",t:"m",n:"Kaffee, Tee, Kakao",soll:4,e:"Pck.",x:1},
+ {id:"l-snacks",f:"essen",t:"m",n:"Kekse, Schokolade, Salzstangen, Gummibärchen",soll:16,e:"Pck.",x:1},
+ {id:"l-basics",f:"essen",t:"p",n:"Basics: Salz, Zucker, Mehl, Brühe, Gewürze"},
+ {id:"l-riegel",f:"essen",t:"m",n:"Notriegel (Notfall-Box, nicht rotieren)",soll:6,e:"Tagesrat.",x:1,pp:1,h:"Davon 3 im Familienrucksack."},
+ {id:"l-gefr",f:"essen",t:"m",n:"Gefriergetrocknete Mahlzeiten (Notfall-Box)",soll:6,e:"Port.",x:1,pp:1},
+ {id:"l-hinterfr",f:"essen",t:"p",n:"Mindestbestände passen noch? Wurde etwas nie gegessen?",h:"Ändern unter Mehr → Vorräte bearbeiten."},
+ // Hygiene & Gesundheit
+ {id:"h-wc",f:"hygiene",t:"m",n:"Notfall-Toilettenbeutel mit Bindemittel",soll:60,e:"Stk.",pp:1},
+ {id:"h-muell",f:"hygiene",t:"m",n:"Reißfeste Müllsäcke",soll:2,e:"Rollen"},
+ {id:"h-handsch",f:"hygiene",t:"m",n:"Nitril-Einmalhandschuhe",soll:1,e:"Box"},
+ {id:"h-feucht",f:"hygiene",t:"m",n:"Feuchttücher",soll:6,e:"Pck.",x:1},
+ {id:"h-desi",f:"hygiene",t:"m",n:"Händedesinfektion 500 ml",soll:2,e:"Fl.",x:1},
+ {id:"h-zahn",f:"hygiene",t:"m",n:"Ersatz-Zahnbürsten",soll:3,e:"Stk.",pp:1},
+ {id:"h-pflege",f:"hygiene",t:"p",n:"Reserve über Alltagsbedarf: Toilettenpapier, Zahnpasta, Seife, Duschgel, Shampoo, Trockenshampoo, Monatshygiene"},
+ {id:"h-uw",f:"hygiene",t:"m",n:"Unterwäsche + Socken Erwachsene",soll:14,e:"Sets"},
+ {id:"h-uwk",f:"hygiene",t:"m",n:"Unterwäsche + Socken Amelie (passende Größe)",soll:14,e:"Sets"},
+ {id:"h-einweg",f:"hygiene",t:"m",n:"Einweg-Unterwäsche Erwachsene",soll:10,e:"Stk."},
+ {id:"h-wasch",f:"hygiene",t:"p",n:"Eimer + Wäschestampfer, Handwaschmittel, Wäscheleine"},
+ {id:"h-geschirr",f:"hygiene",t:"p",n:"Einweggeschirr: 50 Teller, 50 Becher, je 30 Holzbesteck"},
+ {id:"h-kueche",f:"hygiene",t:"p",n:"Reserve: Küchenrolle, Spülmittel, Allzweckreiniger, Alufolie, Gefrierbeutel"},
+ {id:"h-flaeche",f:"hygiene",t:"m",n:"Flächendesinfektion",soll:1,e:"Fl.",x:1},
+ {id:"h-tuecher",f:"hygiene",t:"m",n:"Desinfektions-/Reinigungstücher (nicht ausgetrocknet)",soll:2,e:"Pck.",x:1},
+ {id:"h-apo",f:"hygiene",t:"p",x:1,n:"Hausapotheke vollständig (BBK-Liste), Verfallsdaten",h:"Frühestes Verfallsdatum eintragen. Schmerz-/Fiebermittel, Thermometer, Desinfektion, Verband, Durchfall/Übelkeit, Erkältung, Elektrolyte, Sonnenbrand/Insekten, Nasenspray."},
+ {id:"h-kind",f:"hygiene",t:"p",n:"Kinder-Medikamente passend zu Amelies Alter und Gewicht"},
+ {id:"h-med",f:"hygiene",t:"p",n:"Persönliche Medikamente: Vorrat ≥ 14 Tage"},
+ {id:"h-ffp2",f:"hygiene",t:"m",n:"FFP2-Masken",soll:30,e:"Stk.",x:1},
+ {id:"h-ffp3",f:"hygiene",t:"m",n:"FFP3-Masken",soll:10,e:"Stk.",x:1},
+ {id:"h-kurs",f:"hygiene",t:"u",i:24,n:"Kurs „Erste Hilfe am Kind“ (Jasmin)",h:"DRK, Malteser oder Johanniter; Auffrischung alle 2–3 Jahre."},
+ // Information & Funk
+ {id:"i-nina",f:"info",t:"p",n:"NINA auf beiden Handys geöffnet, Standort + Benachrichtigungen, Cell Broadcast an",h:"Warn-Apps deaktivieren sich nach Updates manchmal still."},
+ {id:"i-radio",f:"info",t:"p",n:"Kurbelradio: geladen, Empfang ok, Kurbel funktioniert"},
+ {id:"i-funk",f:"info",t:"p",n:"Funkgeräte: geladen, Kanal stimmt, Funkprobe Haus ↔ Straße"},
+ {id:"i-ff",f:"info",t:"u",i:12,n:"Funkprobe Haus ↔ Feuerwehrhaus"},
+ {id:"i-freq",f:"info",t:"u",i:0,n:"UKW-Frequenzen der Regionalsender in die Notfallmappe"},
+ // Kraftstoff
+ {id:"f-kan",f:"kraftstoff",t:"p",n:"Benzinkanister ins Auto gefüllt und frisch mit Super E5 befüllt",o:"Garage",h:"So ist das Benzin nie älter als 6 Monate. Nicht randvoll füllen."},
+ {id:"f-zust",f:"kraftstoff",t:"p",n:"Kanister: kein Rost, Dichtung ok; Ausgießrohr + Trichter vorhanden"},
+ {id:"f-menge",f:"kraftstoff",t:"p",n:"Benzin in der Garage insgesamt ≤ 20 l"},
+ {id:"f-tank",f:"kraftstoff",t:"p",n:"Tankregel eingehalten: nie unter halb voll"},
+ {id:"f-ueb",f:"kraftstoff",t:"u",i:12,n:"Übung Jasmin: aus dem Kanister ins Auto füllen"},
+ // Sicherheit
+ {id:"x-rauch",f:"sicherheit",t:"p",n:"Rauchmelder: Testknopf bei allen"},
+ {id:"x-loesch",f:"sicherheit",t:"m",n:"Feuerlöscher (Plombe, Manometer im grünen Bereich)",soll:3,e:"Stk.",x:1,h:"Nächstes Wartungsdatum als MHD eintragen."},
+ {id:"x-decke",f:"sicherheit",t:"p",n:"Löschdecke in der Küche"},
+ {id:"x-spray",f:"sicherheit",t:"m",n:"Tierabwehrspray (kindersicher)",soll:2,e:"Stk.",x:1},
+ {id:"x-sturm",f:"sicherheit",t:"p",n:"Abdeckplane, Spanngurte, Arbeitshandschuhe, Akkus geladen"},
+ {id:"x-flucht",f:"sicherheit",t:"u",i:12,n:"Fluchtplan mit Amelie üben"},
+ {id:"x-haupt",f:"sicherheit",t:"u",i:12,n:"Jasmin findet Wasser-/Gas-Haupthahn und Sicherungskasten"},
+ // Psyche & Beschäftigung
+ {id:"p-box",f:"psyche",t:"p",n:"Überraschungsbox für Amelie vollständig und verschlossen"},
+ {id:"p-boxjahr",f:"psyche",t:"u",i:12,s:"h",n:"Überraschungsbox altersgerecht tauschen, alten Inhalt freigeben"},
+ {id:"p-spiele",f:"psyche",t:"m",n:"Familienspiele",soll:2,e:"Stk."},
+ {id:"p-licht",f:"psyche",t:"p",n:"LED-Kerzen/Lichterkette + Batterien"},
+ {id:"p-medien",f:"psyche",t:"p",n:"Offline-Hörspiele und Medien (Tablet befüllt, Figuren da)"},
+ // Dokumente & Absprachen
+ {id:"d-box",f:"doku",t:"p",n:"Dokumentenbox: Dokumente aktuell (Ausweise gültig?), Scans aktuell"},
+ {id:"d-geld",f:"doku",t:"m",n:"Bargeld in kleinen Scheinen und Münzen",soll:200,st:10,e:"€",h:"Ca. 50 € davon im Familienrucksack."},
+ {id:"d-ruck",f:"doku",t:"p",n:"Familienrucksack: Wasser/Riegel-MHD, Powerbank, Batterien, Wechselwäsche Amelie passt"},
+ {id:"d-pack",f:"doku",t:"p",n:"Packliste und Notfallmappe aktuell (Nummern, Anleitungen)"},
+ {id:"d-abspr",f:"doku",t:"p",n:"Absprachen mit Jasmin und Eltern wiederholt (Treffpunkte, Kita, Rufzeiten)"},
+ {id:"d-ausw",f:"doku",t:"u",i:0,n:"Ausweichort außerhalb Kleinostheims klären"},
+ {id:"d-evak",f:"doku",t:"u",i:12,n:"Übung „Evakuierung in 10 Minuten“"}
+];
+
+var MAPPE = [
+ {id:"kontakte",n:"Wichtige Telefonnummern",v:"Notruf Feuerwehr/Rettung: 112\nPolizei: 110\nKevin: \nJasmin: \nOma/Opa (nebenan): \nKita St. Markus: \nHausarzt: \nKinderarzt: \nVermieter: \nGiftinformationszentrum: \nVersicherung (Hausrat): "},
+ {id:"treff",n:"Treffpunkte und Abholung",v:"Wenn wir getrennt sind und das Handynetz ausfällt:\n1. Bei Oma/Opa nebenan\n2. Leuchtturm: Feuerwehrhaus Kleinostheim (Notruf, Informationen)\n3. Ausweichort außerhalb: (noch klären)\n\nKita-Abholung: Jasmin → Kevin → Oma/Opa (alle abholberechtigt)\n\nIst Kevin im Einsatz: Jasmin entscheidet. Erste Hilfe: Oma/Opa, dann Leuchtturm."},
+ {id:"funk",n:"Funk und Radio",v:"PMR446-Kanal: ___  Code: ___\nRufzeiten: zur vollen Stunde, 2 Minuten\nUKW-Sender (Frequenz):\n- \n- \nWarn-App: NINA (Standort Kleinostheim)"},
+ {id:"haus",n:"Haus-Technik",v:"Wasser-Haupthahn: (Ort beschreiben, Foto)\nGas-Haupthahn: (Ort beschreiben, Foto)\nSicherungskasten/FI: (Ort beschreiben, Foto)\n\nGasflaschen: Gartenhütte. Nie im Keller lagern."},
+ {id:"erste",n:"Erste Stunde Stromausfall",v:"1. Ruhig bleiben, Stirnlampe nehmen (Notlichter gehen von selbst an)\n2. Nur wir oder die ganze Straße? Nachbarn, Straßenlaternen prüfen\n3. Radio (UKW) an, NINA prüfen, solange das Netz noch geht\n4. Wassersack in die Wanne und füllen, Faltkanister füllen, solange Wasser läuft\n5. Kühl- und Gefrierschrank geschlossen halten\n6. Empfindliche Geräte ausstecken, eine Lampe eingeschaltet lassen (zeigt, wann der Strom zurück ist)\n7. Oma/Opa nebenan Bescheid geben\n8. Powerstation: Ladestand prüfen, nur Nötiges anschließen\n9. Im Winter: Wohnzimmer als Wärmeinsel, Türen zu, Gasheizofen/Kamin, CO-Melder an\n10. Auto nicht unnötig bewegen (Tank ist halb voll)\n11. Notruf geht nicht? → Leuchtturm Feuerwehrhaus"},
+ {id:"anl",n:"Kurzanleitungen",v:"Powerstation: Hauptschalter, dann AC-Ausgang ein. Kühlschrank über Verlängerung anschließen. Winter: Kühlschrank aus lassen, Kühles auf die Terrasse.\nSolarmodul: aufklappen, zur Sonne ausrichten, MC4-Kabel an den Solareingang.\nTupike: DIN-Combi-Adapter an die 11-kg-Flasche (Linksgewinde), Ventil auf, zünden. Nur draußen!\nGasheizofen: Flasche einsetzen, Regler F1-t, zünden, 4,2 kW aufheizen, dann klein. Vor dem Schlafen aus. Stündlich kurz lüften.\nWassersack: in die leere Wanne legen, Schlauch an den Hahn, füllen. Wasser mit der Pumpe entnehmen.\nWasserfilter: oben füllen, aufhängen, durchlaufen lassen. Danach Micropur Forte nach Packung.\nToilette: Beutel über die Schüssel, Bindemittel hinein, nach Gebrauch verknoten, in die Mülltonne."},
+ {id:"tag",n:"Notfall-Tagesplan",v:"7:30  Aufstehen, anziehen, Frühstück (Müsli, Knäckebrot)\n9:00  Aufgaben: Wasser holen, Holz holen, aufräumen (Amelie hilft)\n10:00 Radio-Nachrichten (nicht vor Amelie dauerhaft laufen lassen)\n10:30 Spielen, Malen, Überraschungsbox (ein Teil pro Tag)\n12:00 Warmes Mittagessen (Tupike, draußen)\n13:00 Ruhezeit, Vorlesen\n15:00 Draußen bewegen, Oma/Opa besuchen\n17:00 Wärmeinsel vorbereiten, Licht an\n18:00 Abendessen\n19:00 Familienspiel, Hörspiel\n20:00 Amelie schläft; Gasheizofen aus, lüften"},
+ {id:"pack",n:"Packliste Evakuierung",v:"Familienrucksack (fertig gepackt): Notriegel 3 Tagesrationen, 2 × Wasser 1,5 l, Erste-Hilfe-Set, Rettungsdecken, Stirnlampe + Batterien, Powerbank + Kabel, Einweg-Unterwäsche, Wechselwäsche Amelie, Hygiene-Set, Regenponchos, Taschenmesser, Feuerzeug, Panzertape, Müllbeutel, Kopie dieser Mappe, kleines Spiel, ca. 50 € Bargeld\n\nAus dem Alltag mitnehmen:\n[ ] Dokumentenbox\n[ ] Handys + Ladekabel, Geldbörsen, Schlüssel\n[ ] Persönliche Medikamente\n[ ] Amelies Kuscheltier\n[ ] Brillen\n[ ] Jacken, feste Schuhe, Mützen\n[ ] Schlafsäcke (Kinderschlafsack!)\n[ ] Funkgeräte\n[ ] Bei Zeit: Kurbelradio, Hygiene-Box"}
+];
+
+/* ============================================================
+   Zustand
+   ============================================================ */
+var LS = "temptoy-katastrophenschutz-v1";
+var state, readOnly = false, view = "home", checkMode = "karte", editId = null;
+
+function deep(o){ return JSON.parse(JSON.stringify(o)); }
+function frisch(){
+  return {v:1, t:Date.now(), name:"Unser Haushalt", personen:3, tage:14,
+    items: VORLAGE.map(function(it){ var c = deep(it); c.ist = null; c.mhd = null; c.ok = null; c.last = null; c.notiz = ""; return c; }),
+    mappe: MAPPE.map(function(m){ return {id:m.id, n:m.n, v:m.v}; }),
+    session: null, verlauf: [], erledigt: {}};
+}
+function sollVon(it){
+  if(it.soll == null) return null;
+  if(it.pp && state.personen !== 3) return Math.max(1, Math.round(it.soll * state.personen / 3 / (it.st||1)) * (it.st||1));
+  return it.soll;
+}
+function minVon(it){
+  var s = sollVon(it);
+  if(it.min != null){ return it.pp && state.personen !== 3 ? Math.round(it.min * state.personen / 3 * 10)/10 : it.min; }
+  return s;
+}
+function fmt(n){ return (Math.round(n*10)/10).toLocaleString("de-DE"); }
+
+/* Datum */
+function heute(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
+function ym(d){ return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0"); }
+function letzterSonntag(y, m){ var d = new Date(y, m+1, 0); d.setDate(d.getDate() - d.getDay()); d.setHours(0,0,0,0); return d; }
+function dt(d){ return d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}); }
+function addMon(d, n){ var x = new Date(d); x.setMonth(x.getMonth()+n); return x; }
+function naechsteTermine(ab){
+  var y = ab.getFullYear(), list = [];
+  for(var k = y-1; k <= y+2; k++){ list.push({d:letzterSonntag(k,2), saison:"f"}); list.push({d:letzterSonntag(k,9), saison:"h"}); }
+  list.sort(function(a,b){ return a.d - b.d; });
+  return list;
+}
+function saisonName(s){ return s === "f" ? "Frühjahrs-Check" : s === "h" ? "Herbst-Check" : "Erst-Check"; }
+
+/* Nächster Check: der erste Zeitumstellungs-Termin nach dem letzten Check */
+function nextCheck(){
+  var last = state.verlauf.length ? new Date(state.verlauf[state.verlauf.length-1].datum) : null;
+  var offen = state.items.some(function(i){ return i.t !== "u" && status(i) === "neu"; });
+  if(!last || offen) return {erst:true, saison:"e", d:heute(), faellig:true, weiter: !!last};
+  var ts = naechsteTermine(last);
+  var cutoff = new Date(last.getTime() + 30*86400000); // ein Check zählt für den Termin der nächsten 30 Tage
+  for(var i=0;i<ts.length;i++){ if(ts[i].d > cutoff) { var d = ts[i].d; return {saison:ts[i].saison, d:d, faellig: heute() >= new Date(d.getTime() - 14*86400000)}; } }
+  return {saison:"h", d:heute(), faellig:true};
+}
+
+/* Status je Position */
+function status(it){
+  if(it.t === "u"){
+    if(!it.last) return "faellig";
+    if(!it.i) return "ok";
+    var due = addMon(new Date(it.last), it.i);
+    return due <= addMon(heute(), 1) ? "faellig" : "ok";
+  }
+  if(it.t === "p"){
+    if(it.ok === null) return "neu";
+    if(it.ok === false) return "problem";
+  } else {
+    if(it.ist === null) return "neu";
+    if(it.ist < minVon(it)) return "fehlt";
+  }
+  if(it.x && it.mhd){
+    var now = ym(heute()), soon = ym(addMon(heute(), 6));
+    if(it.mhd < now) return "ablauf";
+    if(it.mhd <= soon) return "bald";
+  }
+  return "ok";
+}
+var SL = {ok:"passt", neu:"nicht erfasst", fehlt:"fehlt", problem:"Problem", ablauf:"abgelaufen", bald:"bald fällig", faellig:"fällig"};
+function feldAmpel(fid){
+  var its = state.items.filter(function(i){ return i.f === fid; });
+  var st = its.map(status);
+  if(st.some(function(s){ return s==="fehlt"||s==="ablauf"||s==="problem"; })) return "bad";
+  if(st.some(function(s){ return s==="neu"||s==="bald"||s==="faellig"; })) return "warn";
+  return "ok";
+}
+
+/* Speichern: localStorage + komprimierter Stand im URL-Fragment */
+var saveTimer = null;
+function save(msg){
+  if(readOnly) return;
+  state.t = Date.now();
+  try{ localStorage.setItem(LS, JSON.stringify(state)); }catch(e){}
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function(){ encode(state).then(function(h){ try{ history.replaceState(null, "", "#z=" + h); }catch(e){} }); }, 800);
+  if(msg) toast(msg);
+}
+function b64u(bytes){ var s = ""; for(var i=0;i<bytes.length;i++) s += String.fromCharCode(bytes[i]); return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+function unb64u(str){ str = str.replace(/-/g,"+").replace(/_/g,"/"); while(str.length%4) str += "="; var s = atob(str), b = new Uint8Array(s.length); for(var i=0;i<s.length;i++) b[i] = s.charCodeAt(i); return b; }
+function encode(obj){
+  var raw = new TextEncoder().encode(JSON.stringify(obj));
+  if(typeof CompressionStream === "undefined") return Promise.resolve(b64u(raw));
+  var cs = new Blob([raw]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  return new Response(cs).arrayBuffer().then(function(buf){ return "1" + b64u(new Uint8Array(buf)); });
+}
+function decode(h){
+  if(h.charAt(0) !== "1") return Promise.resolve(JSON.parse(new TextDecoder().decode(unb64u(h))));
+  var ds = new Blob([unb64u(h.slice(1))]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  return new Response(ds).text().then(JSON.parse);
+}
+function migrate(s){
+  // neue Vorlagen-Positionen ergänzen, ohne Kevins Änderungen zu überschreiben
+  if(!s || !s.items) return frisch();
+  var have = {}; s.items.forEach(function(i){ have[i.id] = 1; });
+  if(!s.entfernt) s.entfernt = {};
+  VORLAGE.forEach(function(v){ if(!have[v.id] && !s.entfernt[v.id]){ var c = deep(v); c.ist=null; c.mhd=null; c.ok=null; c.last=null; c.notiz=""; s.items.push(c); } });
+  if(!s.mappe) s.mappe = MAPPE.map(function(m){ return {id:m.id,n:m.n,v:m.v}; });
+  if(!s.verlauf) s.verlauf = [];
+  if(!s.personen) s.personen = 3;
+  return s;
+}
+
+/* ============================================================
+   UI-Helfer
+   ============================================================ */
+var app = document.getElementById("app");
+function h(tag, attrs, kids){
+  var el = document.createElement(tag);
+  if(attrs) Object.keys(attrs).forEach(function(k){
+    var v = attrs[k];
+    if(k === "class") el.className = v;
+    else if(k === "text") el.textContent = v;
+    else if(k === "html") el.innerHTML = v;
+    else if(k.slice(0,2) === "on") el.addEventListener(k.slice(2), v);
+    else if(v !== false && v != null) el.setAttribute(k, v === true ? "" : v);
+  });
+  (kids||[]).forEach(function(c){ if(c == null) return; el.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+  return el;
+}
+function toast(t){ var el = document.getElementById("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast.tm); toast.tm = setTimeout(function(){ el.classList.remove("show"); }, 1800); }
+function pill(s){ return h("span",{class:"pill s-"+s, text:SL[s]}); }
+function feldName(fid){ for(var i=0;i<FELDER.length;i++) if(FELDER[i].id===fid) return FELDER[i].n; return fid; }
+function byId(id){ for(var i=0;i<state.items.length;i++) if(state.items[i].id===id) return state.items[i]; return null; }
+function copy(text, ok){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ toast(ok); }, function(){ showText(text); });
+  } else showText(text);
+}
+function showText(text){
+  dialog("Zum Kopieren markieren", [h("div",{class:"field"},[h("textarea",{id:"copy-ta", readonly:true, text:text, style:"min-height:220px"})])]);
+  setTimeout(function(){ var ta = document.getElementById("copy-ta"); if(ta){ ta.focus(); ta.select(); } }, 50);
+}
+function dialog(title, body, actions){
+  var d = h("div",{class:"dialog", onclick:function(e){ if(e.target === d) d.remove(); }});
+  var sheet = h("div",{class:"sheet", role:"dialog", "aria-label":title},[h("h2",{text:title, style:"margin-top:0"})].concat(body).concat([
+    h("div",{class:"row", style:"margin-top:12px;justify-content:flex-end"},(actions||[]).concat([h("button",{class:"btn", id:"dlg-close", text:"Schließen", onclick:function(){ d.remove(); }})]))
+  ]));
+  d.appendChild(sheet); document.body.appendChild(d);
+  return d;
+}
+
+/* Tab-Leiste */
+var ICONS = {
+  home:'<svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  check:'<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 12l3 3 5-6"/></svg>',
+  einkauf:'<svg viewBox="0 0 24 24"><path d="M5 7h14l-1.5 12h-11z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>',
+  mappe:'<svg viewBox="0 0 24 24"><path d="M4 5h6l2 2h8v12H4z"/><path d="M8 13h8M8 16h5"/></svg>',
+  mehr:'<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>'
+};
+function tabs(){
+  var nav = document.getElementById("tabs"); nav.innerHTML = "";
+  var inn = h("div",{class:"in"});
+  var nEink = einkauf().length;
+  [["home","Übersicht"],["check","Check"],["einkauf","Einkauf"],["mappe","Mappe"],["mehr","Mehr"]].forEach(function(t){
+    if(readOnly && (t[0]==="check")) return;
+    var b = h("button",{class: view===t[0] ? "on" : "", id:"tab-"+t[0], "aria-current": view===t[0] ? "page" : false, onclick:function(){ go(t[0]); }});
+    b.innerHTML = ICONS[t[0]];
+    b.appendChild(h("span",{text:t[1]}));
+    if(t[0]==="einkauf" && nEink) b.appendChild(h("span",{class:"badge", text:String(nEink)}));
+    inn.appendChild(b);
+  });
+  if(readOnly) inn.style.gridTemplateColumns = "repeat(4,1fr)";
+  nav.appendChild(inn);
+}
+function go(v){ view = v; render(); window.scrollTo(0,0); }
+
+/* ============================================================
+   Ansichten
+   ============================================================ */
+function render(){
+  app.innerHTML = "";
+  if(readOnly) app.appendChild(h("div",{class:"ro-banner no-print", text:"Leseansicht · Stand vom " + dt(new Date(state.t)) + " · Änderungen werden nicht gespeichert"}));
+  ({home:vHome, check:vCheck, einkauf:vEinkauf, mappe:vMappe, mehr:vMehr, edit:vEdit, liste:vListe}[view] || vHome)();
+  app.appendChild(h("p",{class:"printonly", text:"Stand: " + dt(new Date()) + " · " + state.name}));
+  tabs();
+}
+
+function vHome(){
+  var its = state.items, n = its.length;
+  var ok = its.filter(function(i){ return status(i)==="ok"; }).length;
+  var pct = n ? Math.round(ok/n*100) : 0;
+  var nc = nextCheck();
+  var sess = state.session;
+  app.appendChild(h("div",{class:"top"},[h("div",{},[h("h1",{text:"Vorsorge"}), h("p",{class:"mu sm", text: state.name + " · " + state.personen + " Personen · " + state.tage + " Tage"})])]));
+
+  var r = 32, c = 2*Math.PI*r;
+  var ring = '<svg class="ring" viewBox="0 0 84 84" role="img" aria-label="Bereitschaft ' + pct + ' Prozent"><circle cx="42" cy="42" r="'+r+'" fill="none" stroke="var(--neu-soft)" stroke-width="9"/><circle cx="42" cy="42" r="'+r+'" fill="none" stroke="var(--ok)" stroke-width="9" stroke-linecap="'+(pct>0?"round":"butt")+'" stroke-dasharray="'+(c*pct/100)+' '+c+'" transform="rotate(-90 42 42)"/><text x="42" y="49" text-anchor="middle">'+pct+'%</text></svg>';
+  var cardTxt = sess ? ("Check läuft: " + Object.keys(sess.done).length + " von " + sess.ids.length + " geprüft") :
+    nc.erst ? (nc.weiter ? "Bestandsaufnahme noch nicht vollständig" : "Erster Durchgang: Bestand einmal aufnehmen") :
+    (saisonName(nc.saison) + " am " + dt(nc.d) + (nc.faellig ? " · jetzt fällig" : ""));
+  app.appendChild(h("div",{class:"card next hero"},[
+    h("div",{html:ring}),
+    h("div",{},[h("b",{text:"Bereitschaft"}), h("p",{class:"sm mu", text: ok + " von " + n + " Punkten passen"}), h("p",{class:"sm", text:cardTxt})])
+  ]));
+  if(!readOnly){
+    var label = sess ? "Check fortsetzen" : nc.erst ? (nc.weiter ? "Bestandsaufnahme fortsetzen" : "Bestandsaufnahme starten") : (nc.faellig ? saisonName(nc.saison) + " starten" : "Check vorziehen");
+    app.appendChild(h("button",{class:"btn pri big no-print", id:"btn-start", text:label, onclick:startCheck}));
+  }
+
+  var e = einkauf(), auf = state.items.filter(function(i){ return i.t==="u" && status(i)==="faellig"; });
+  var bald = state.items.filter(function(i){ return status(i)==="bald"; });
+  app.appendChild(h("div",{class:"stats", style:"margin-top:10px"},[
+    h("button",{class:"stat", id:"st-einkauf", onclick:function(){ go("einkauf"); }},[h("b",{text:String(e.length)}), h("span",{text:"auf der Einkaufsliste"})]),
+    h("button",{class:"stat", id:"st-bald", onclick:function(){ go("einkauf"); }},[h("b",{text:String(bald.length)}), h("span",{text:"bald verbrauchen"})]),
+    h("button",{class:"stat", id:"st-aufg", onclick:function(){ view="liste"; listeFilter="aufgaben"; render(); }},[h("b",{text:String(auf.length)}), h("span",{text:"Aufgaben fällig"})])
+  ]));
+
+  app.appendChild(h("h2",{text:"Themenfelder"}));
+  var g = h("div",{class:"fields"});
+  FELDER.forEach(function(f){
+    var its2 = state.items.filter(function(i){ return i.f===f.id; });
+    var ok2 = its2.filter(function(i){ return status(i)==="ok"; }).length;
+    g.appendChild(h("button",{class:"fld "+feldAmpel(f.id), id:"fld-"+f.id, onclick:function(){ view="liste"; listeFilter=f.id; render(); }},[h("b",{text:f.n}), h("span",{text: ok2 + "/" + its2.length + " passen"})]));
+  });
+  app.appendChild(g);
+}
+
+/* ---------- Check ---------- */
+function checkUmfang(saison){
+  return state.items.filter(function(i){
+    if(saison === "e") return i.t === "u" ? status(i) === "faellig" : status(i) === "neu";
+    if(i.t === "u") return status(i) === "faellig" && (!i.s || i.s === "a" || i.s === saison);
+    return !i.s || i.s === "a" || i.s === saison;
+  }).sort(function(a,b){ return FELDER.findIndex(function(f){return f.id===a.f;}) - FELDER.findIndex(function(f){return f.id===b.f;}); }).map(function(i){ return i.id; });
+}
+function startCheck(){
+  if(!state.session){
+    var nc = nextCheck();
+    state.session = {saison: nc.erst ? "e" : nc.saison, ids: checkUmfang(nc.erst ? "e" : nc.saison), done:{}, pos:0, start: Date.now()};
+    save();
+  }
+  go("check");
+}
+function vCheck(){
+  var s = state.session;
+  if(!s){
+    app.appendChild(h("h1",{text:"Check"}));
+    app.appendChild(h("div",{class:"card empty"},[h("p",{text:"Gerade läuft kein Check."}), h("button",{class:"btn pri", id:"btn-start2", text:"Check starten", onclick:startCheck})]));
+    return;
+  }
+  var doneN = Object.keys(s.done).length;
+  app.appendChild(h("div",{class:"top"},[h("div",{},[h("h1",{text:saisonName(s.saison)}), h("p",{class:"mu sm", text: doneN + " von " + s.ids.length + " geprüft · jederzeit pausierbar"})]),
+    h("div",{class:"seg", style:"margin-top:6px"},[
+      h("button",{class: checkMode==="karte"?"on":"", id:"mode-karte", text:"Karten", onclick:function(){ checkMode="karte"; render(); }}),
+      h("button",{class: checkMode==="liste"?"on":"", id:"mode-liste", text:"Liste", onclick:function(){ checkMode="liste"; render(); }})
+    ])]));
+  app.appendChild(h("div",{class:"prog"},[h("i",{style:"width:"+(s.ids.length? doneN/s.ids.length*100 : 0)+"%"})]));
+  if(doneN >= s.ids.length && s.ids.length){
+    app.appendChild(h("div",{class:"card"},[h("h3",{text:"Alles geprüft"}), h("p",{class:"sm mu", style:"margin-top:6px", text: einkauf().length + " Positionen stehen jetzt auf der Einkaufsliste."}),
+      h("button",{class:"btn pri big", id:"btn-finish", text:"Check abschließen", onclick:finishCheck})]));
+  }
+  if(checkMode === "karte") karte(); else checkListe();
+  app.appendChild(h("div",{class:"row", style:"margin-top:10px;justify-content:space-between"},[
+    h("button",{class:"btn ghost", id:"btn-pause", text:"Pausieren", onclick:function(){ go("home"); toast("Check pausiert"); }}),
+    h("button",{class:"btn ghost", id:"btn-finish2", text:"Check jetzt abschließen", onclick:finishCheck})
+  ]));
+}
+function finishCheck(){
+  var s = state.session; if(!s) return;
+  state.verlauf.push({datum: new Date().toISOString(), saison: s.saison, n: Object.keys(s.done).length});
+  state.session = null; save("Check abgeschlossen");
+  go("einkauf");
+}
+function markDone(it){ var s = state.session; if(s){ s.done[it.id] = 1; } it.geprueft = new Date().toISOString(); }
+function nextPos(){
+  var s = state.session;
+  for(var k=1;k<=s.ids.length;k++){ var p = (s.pos + k) % s.ids.length; if(!s.done[s.ids[p]]) { s.pos = p; return; } }
+}
+function karte(){
+  var s = state.session;
+  if(s.pos >= s.ids.length) s.pos = 0;
+  var it = byId(s.ids[s.pos]);
+  if(!it){ s.ids.splice(s.pos,1); save(); render(); return; }
+  var idx = s.pos + 1;
+  var c = h("div",{class:"card ccard"});
+  c.appendChild(h("div",{class:"row"},[h("span",{class:"feld grow", text: feldName(it.f) + " · " + idx + "/" + s.ids.length}), pill(status(it))]));
+  c.appendChild(h("h3",{text:it.n}));
+  var meta = [];
+  if(it.t === "m") meta.push("Soll: " + fmt(sollVon(it)) + " " + it.e + (it.min!=null ? " (nachkaufen unter " + fmt(minVon(it)) + ")" : ""));
+  if(it.o) meta.push("Ort: " + it.o);
+  if(meta.length) c.appendChild(h("p",{class:"sm mu", text:meta.join(" · ")}));
+  if(it.h) c.appendChild(h("div",{class:"hint", text:it.h}));
+
+  if(it.t === "m"){
+    if(it.ist === null) it._tmp = (it._tmp != null ? it._tmp : sollVon(it));
+    var cur = it.ist === null ? it._tmp : it.ist;
+    var out = h("output",{id:"cnt", "aria-live":"polite"},[String(fmt(cur)), h("small",{text: it.e + (it.ist === null ? " · mit Soll vorbelegt" : "")})]);
+    var step = it.st || 1;
+    function setv(v){ v = Math.max(0, Math.round(v/step)*step); v = Math.round(v*10)/10; it.ist = v; it._tmp = null; out.firstChild.nodeValue = fmt(v); }
+    c.appendChild(h("div",{class:"stepper"},[
+      h("button",{id:"minus", "aria-label":"weniger", text:"−", onclick:function(){ setv((it.ist===null?cur:it.ist) - step); }}),
+      out,
+      h("button",{id:"plus", "aria-label":"mehr", text:"+", onclick:function(){ setv((it.ist===null?cur:it.ist) + step); }})
+    ]));
+  }
+  if(it.t === "p"){
+    c.appendChild(h("div",{class:"choice"},[
+      h("button",{id:"c-ok", class:"okb" + (it.ok===true?" on":""), text:"✓ passt", onclick:function(){ it.ok = true; markDone(it); weiter(); }}),
+      h("button",{id:"c-bad", class:"badb" + (it.ok===false?" on":""), text:"✗ Problem", onclick:function(){ it.ok = false; markDone(it); weiter(); }})
+    ]));
+  }
+  if(it.t === "u"){
+    c.appendChild(h("p",{class:"sm", text: it.last ? "Zuletzt erledigt: " + dt(new Date(it.last)) : "Noch nie erledigt"}));
+    c.appendChild(h("div",{class:"choice"},[
+      h("button",{id:"c-done", class:"okb", text:"✓ erledigt", onclick:function(){ it.last = new Date().toISOString(); markDone(it); weiter(); }}),
+      h("button",{id:"c-later", text:"Später", onclick:function(){ markDone(it); weiter(); }})
+    ]));
+  }
+  if(it.x){
+    var inp = h("input",{type:"month", id:"mhd", value: it.mhd || "", "aria-label":"Ältestes MHD", onchange:function(){ it.mhd = inp.value || null; save(); }});
+    c.appendChild(h("div",{class:"mhd"},[h("label",{for:"mhd", text: it.t==="p" ? "Ablauf / Verfall:" : "Ältestes MHD:"}), inp]));
+  }
+  if(it.t === "m"){
+    c.appendChild(h("div",{class:"nav"},[
+      h("button",{class:"btn", id:"c-skip", text:"Überspringen", onclick:function(){ nextPos(); save(); render(); }}),
+      h("button",{class:"btn pri", id:"c-next", text:"Weiter", onclick:function(){ if(it.ist===null){ it.ist = cur; it._tmp = null; } markDone(it); weiter(); }})
+    ]));
+  } else {
+    c.appendChild(h("div",{class:"nav"},[h("button",{class:"btn", id:"c-skip", text:"Überspringen", onclick:function(){ nextPos(); save(); render(); }}), h("span")]));
+  }
+  app.appendChild(c);
+}
+function weiter(){ nextPos(); save(); render(); }
+
+function itemControl(it, inCheck){
+  var box = h("div",{class:"mini"});
+  if(readOnly){ box.appendChild(pill(status(it))); return box; }
+  if(it.t === "m"){
+    var step = it.st || 1;
+    var o = h("output",{text: it.ist===null ? "–" : fmt(it.ist)});
+    function upd(d){ var base = it.ist===null ? sollVon(it) : it.ist; it.ist = Math.max(0, Math.round((base + d)*10)/10); if(inCheck) markDone(it); save(); render(); }
+    box.appendChild(h("button",{"aria-label":"weniger "+it.n, text:"−", onclick:function(){ upd(-step); }}));
+    box.appendChild(o);
+    box.appendChild(h("button",{"aria-label":"mehr "+it.n, text:"+", onclick:function(){ upd(step); }}));
+    if(it.ist === null) box.appendChild(h("button",{class:"tick", "aria-label":it.n+" passt", text:"=", title:"Soll übernehmen", onclick:function(){ it.ist = sollVon(it); if(inCheck) markDone(it); save(); render(); }}));
+  } else if(it.t === "p"){
+    box.appendChild(h("button",{class:"tick"+(it.ok===true?" on":""), text:"✓", "aria-label":it.n+" passt", onclick:function(){ it.ok = true; if(inCheck) markDone(it); save(); render(); }}));
+    box.appendChild(h("button",{class:"tick"+(it.ok===false?" bad":""), text:"✗", "aria-label":it.n+" Problem", onclick:function(){ it.ok = false; if(inCheck) markDone(it); save(); render(); }}));
+  } else {
+    box.appendChild(h("button",{class:"tick"+(status(it)==="ok"?" on":""), text:"erledigt", onclick:function(){ it.last = new Date().toISOString(); if(inCheck) markDone(it); save(); render(); }}));
+  }
+  return box;
+}
+function itemRow(it, inCheck){
+  var meta = [];
+  if(it.t==="m") meta.push("Soll " + fmt(sollVon(it)) + " " + it.e);
+  if(it.x && it.mhd) meta.push("MHD " + it.mhd.split("-").reverse().join("/"));
+  if(it.t==="u" && it.last) meta.push("zuletzt " + dt(new Date(it.last)));
+  if(it.o) meta.push(it.o);
+  return h("div",{class:"it"},[
+    h("div",{},[h("div",{class:"nm", text:it.n}), h("div",{class:"meta"},[pill(status(it)), " ", meta.join(" · ")])]),
+    itemControl(it, inCheck)
+  ]);
+}
+function checkListe(){
+  var s = state.session;
+  FELDER.forEach(function(f){
+    var ids = s.ids.filter(function(id){ var i = byId(id); return i && i.f===f.id; });
+    if(!ids.length) return;
+    var dn = ids.filter(function(id){ return s.done[id]; }).length;
+    var d = h("details",{class:"grp", open: dn < ids.length},[h("summary",{},[f.n, h("span",{class:"xs mu", text: dn + "/" + ids.length})])]);
+    var l = h("div",{class:"list"});
+    ids.forEach(function(id){ l.appendChild(itemRow(byId(id), true)); });
+    d.appendChild(l); app.appendChild(d);
+  });
+}
+
+/* ---------- Einkauf ---------- */
+function einkauf(){
+  return state.items.filter(function(i){ var s = status(i); return i.t !== "u" && (s==="fehlt"||s==="ablauf"||s==="problem"); });
+}
+function vEinkauf(){
+  app.appendChild(h("div",{class:"top"},[h("h1",{text:"Einkaufsliste"}), h("button",{class:"btn no-print", id:"btn-print-e", text:"Als PDF sichern", onclick:function(){ window.print(); }})]));
+  var e = einkauf(), bald = state.items.filter(function(i){ return status(i)==="bald"; });
+  if(!e.length && !bald.length){ app.appendChild(h("div",{class:"card empty", text:"Nichts zu kaufen. Alles im Soll."})); return; }
+  if(e.length){
+    var c = h("div",{class:"card list"});
+    e.forEach(function(it){
+      var s = status(it), was;
+      if(s==="fehlt") was = "Kaufen: " + fmt(sollVon(it) - it.ist) + " " + it.e + " (Soll " + fmt(sollVon(it)) + ")";
+      else if(s==="ablauf") was = "Ersetzen: abgelaufen " + it.mhd.split("-").reverse().join("/");
+      else was = "Klären oder ersetzen" + (it.notiz ? ": " + it.notiz : "");
+      c.appendChild(h("div",{class:"it"},[
+        h("div",{},[h("div",{class:"nm", text:it.n}), h("div",{class:"meta", text: feldName(it.f) + " · " + was})]),
+        readOnly ? pill(s) : h("button",{class:"tick", id:"buy-"+it.id, text:"erledigt", onclick:function(){
+          if(it.t==="m"){ it.ist = Math.max(it.ist||0, sollVon(it)); if(s==="ablauf") it.mhd = null; } else { it.ok = true; if(s==="ablauf") it.mhd = null; }
+          save("Abgehakt" + (it.x ? " · MHD beim nächsten Check eintragen" : "")); render();
+        }})
+      ]));
+    });
+    app.appendChild(c);
+  }
+  if(bald.length){
+    app.appendChild(h("h2",{text:"Bald verbrauchen und nachkaufen"}));
+    app.appendChild(h("p",{class:"sm mu", text:"MHD läuft in den nächsten 6 Monaten ab. Im Alltag aufbrauchen (Wasser: Ausflüge, Camping) und frisch nachkaufen."}));
+    var c2 = h("div",{class:"card list"});
+    bald.forEach(function(it){
+      c2.appendChild(h("div",{class:"it"},[
+        h("div",{},[h("div",{class:"nm", text:it.n}), h("div",{class:"meta", text:"MHD " + it.mhd.split("-").reverse().join("/") + " · " + feldName(it.f)})]),
+        readOnly ? pill("bald") : h("button",{class:"tick", id:"rot-"+it.id, text:"getauscht", onclick:function(){ it.mhd = null; save("MHD beim nächsten Check eintragen"); render(); }})
+      ]));
+    });
+    app.appendChild(c2);
+  }
+}
+
+/* ---------- Liste je Themenfeld / Aufgaben ---------- */
+var listeFilter = null;
+function vListe(){
+  var title = listeFilter === "aufgaben" ? "Aufgaben & Übungen" : feldName(listeFilter);
+  app.appendChild(h("div",{class:"top"},[h("h1",{text:title}), h("button",{class:"btn no-print", id:"btn-back", text:"Zurück", onclick:function(){ go("home"); }})]));
+  var its = state.items.filter(function(i){ return listeFilter==="aufgaben" ? i.t==="u" : i.f===listeFilter; });
+  var c = h("div",{class:"card list"});
+  its.forEach(function(it){ c.appendChild(itemRow(it, !!state.session && state.session.ids.indexOf(it.id) >= 0)); });
+  app.appendChild(c);
+}
+
+/* ---------- Notfallmappe ---------- */
+function vMappe(){
+  app.appendChild(h("div",{class:"top"},[h("div",{},[h("h1",{text:"Notfallmappe"}), h("p",{class:"sm mu", text:"Für den Ernstfall auf Papier: ausdrucken, laminieren, Kopie in den Rucksack."})]),
+    h("button",{class:"btn pri no-print", id:"btn-print-m", text:"Als PDF sichern", onclick:function(){ window.print(); }})]));
+  state.mappe.forEach(function(m){
+    var pg = h("section",{class:"card pg mappe-pg"});
+    pg.appendChild(h("h2",{text:m.n, style:"margin-top:0"}));
+    pg.appendChild(h("pre",{text:m.v}));
+    if(!readOnly) pg.appendChild(h("button",{class:"btn ghost no-print", id:"edit-m-"+m.id, style:"margin-top:8px", text:"Bearbeiten", onclick:function(){
+      var ta = h("textarea",{id:"ta-"+m.id, text:m.v, style:"min-height:260px"});
+      dialog(m.n, [h("div",{class:"field"},[ta])], [h("button",{class:"btn pri", id:"save-m", text:"Speichern", onclick:function(){ m.v = ta.value; save("Gespeichert"); document.querySelector(".dialog").remove(); render(); }})]);
+    }}));
+    app.appendChild(pg);
+  });
+  // Bestandsliste als letzte Druckseite (Leseansicht für Jasmin)
+  var best = h("section",{class:"card pg-neu"});
+  best.appendChild(h("h2",{text:"Bestand und Lagerorte", style:"margin-top:0"}));
+  FELDER.forEach(function(f){
+    var its = state.items.filter(function(i){ return i.f===f.id && i.t!=="u"; });
+    best.appendChild(h("h3",{text:f.n, style:"margin-top:10px"}));
+    var ul = h("div",{class:"list"});
+    its.forEach(function(it){
+      var txt = it.t==="m" ? (it.ist===null ? "–" : fmt(it.ist)) + " / " + fmt(sollVon(it)) + " " + it.e : "";
+      ul.appendChild(h("div",{class:"it"},[h("div",{},[h("div",{class:"nm", text:it.n}), h("div",{class:"meta", text:[txt, it.o].filter(Boolean).join(" · ")})]), pill(status(it))]));
+    });
+    best.appendChild(ul);
+  });
+  app.appendChild(best);
+}
+
+/* ---------- Mehr: Haushalt, Teilen, Export, Bearbeiten ---------- */
+function vMehr(){
+  app.appendChild(h("h1",{text:"Mehr"}));
+  if(!readOnly){
+    var c = h("div",{class:"card"});
+    c.appendChild(h("h3",{text:"Haushalt", style:"margin-bottom:8px"}));
+    var nm = h("input",{id:"hh-name", value:state.name, onchange:function(){ state.name = nm.value || "Unser Haushalt"; save("Gespeichert"); }});
+    var pe = h("input",{id:"hh-pers", type:"number", min:"1", max:"12", inputmode:"numeric", value:String(state.personen), onchange:function(){ var v = parseInt(pe.value,10); if(v>0){ state.personen = v; save("Mengen angepasst"); render(); } }});
+    c.appendChild(h("div",{class:"field"},[h("label",{for:"hh-name", text:"Name"}), nm]));
+    c.appendChild(h("div",{class:"field"},[h("label",{for:"hh-pers", text:"Personen (Mengen mit Personenbezug skalieren mit)"}), pe]));
+    app.appendChild(c);
+  }
+  var t = h("div",{class:"card"});
+  t.appendChild(h("h3",{text:"Teilen und sichern", style:"margin-bottom:6px"}));
+  t.appendChild(h("p",{class:"sm mu", text:"Leseansicht für Jasmin: Link schicken, sie sieht Bestand, Einkaufsliste und Notfallmappe. Nach einem Check neu schicken."}));
+  var row = h("div",{class:"row wrapr"});
+  row.appendChild(h("button",{class:"btn pri", id:"btn-share-ro", text:"Link für Jasmin kopieren", onclick:function(){ shareLink("r"); }}));
+  if(!readOnly){
+    row.appendChild(h("button",{class:"btn", id:"btn-export", text:"Stand kopieren (Text)", onclick:function(){ copy(JSON.stringify(state), "Stand kopiert, z. B. im Chat mit Claude einfügen"); }}));
+    row.appendChild(h("button",{class:"btn", id:"btn-file", text:"Als Datei sichern", onclick:saveFile}));
+    row.appendChild(h("button",{class:"btn", id:"btn-import", text:"Stand einfügen", onclick:importDialog}));
+  }
+  t.appendChild(row);
+  t.appendChild(h("p",{class:"sm mu", style:"margin-top:10px", text:"Freunde: einfach den Link zur App ohne Zusatz schicken (lauwerk.github.io/TempToy/katastrophenschutz/). Sie starten mit der Vorlage und ihrem eigenen Stand."}));
+  app.appendChild(t);
+  if(!readOnly){
+    app.appendChild(h("button",{class:"btn big", id:"btn-edit", text:"Vorräte und Ausrüstung bearbeiten", onclick:function(){ go("edit"); }}));
+    var hist = h("div",{class:"card", style:"margin-top:10px"});
+    hist.appendChild(h("h3",{text:"Verlauf", style:"margin-bottom:6px"}));
+    if(!state.verlauf.length) hist.appendChild(h("p",{class:"sm mu", text:"Noch kein Check abgeschlossen."}));
+    state.verlauf.slice().reverse().forEach(function(v){ hist.appendChild(h("p",{class:"sm", text: dt(new Date(v.datum)) + " · " + saisonName(v.saison) + " · " + v.n + " Punkte"})); });
+    var nc = nextCheck();
+    hist.appendChild(h("p",{class:"sm mu", text: nc.erst ? "Danach: Checks immer am Wochenende der Zeitumstellung (Ende März / Ende Oktober)." : "Nächster: " + saisonName(nc.saison) + " am " + dt(nc.d)}));
+    app.appendChild(hist);
+    app.appendChild(h("button",{class:"btn ghost", id:"btn-reset", style:"margin-top:6px;color:var(--bad)", text:"Alles zurücksetzen (Vorlage neu laden)", onclick:function(){
+      dialog("Wirklich zurücksetzen?", [h("p",{text:"Bestand, Notfallmappe und Verlauf werden gelöscht. Vorher am besten „Als Datei sichern“."})],
+        [h("button",{class:"btn", id:"btn-reset-ok", style:"color:var(--bad)", text:"Zurücksetzen", onclick:function(){ state = frisch(); save("Zurückgesetzt"); document.querySelector(".dialog").remove(); go("home"); }})]);
+    }}));
+  }
+}
+function shareLink(kind){
+  encode(state).then(function(hh){
+    var url = location.href.split("#")[0] + "#" + kind + "=" + hh;
+    copy(url, kind==="r" ? "Link kopiert, an Jasmin schicken" : "Link kopiert");
+  });
+}
+function saveFile(){
+  var blob = new Blob([JSON.stringify(state, null, 1)], {type:"application/json"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "vorsorge-stand-" + new Date().toISOString().slice(0,10) + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+}
+function importDialog(){
+  var ta = h("textarea",{id:"imp-ta", placeholder:"Stand hier einfügen (Text aus „Stand kopieren“ oder von Claude)"});
+  var fi = h("input",{type:"file", id:"imp-file", accept:".json,application/json,text/plain", onchange:function(){
+    var f = fi.files && fi.files[0]; if(!f) return;
+    f.text().then(function(t){ ta.value = t; });
+  }});
+  dialog("Stand einfügen", [h("div",{class:"field"},[ta]), h("div",{class:"field"},[h("label",{for:"imp-file", text:"oder Datei wählen"}), fi])],
+    [h("button",{class:"btn pri", id:"imp-ok", text:"Übernehmen", onclick:function(){
+      var o; try{ o = JSON.parse(ta.value); }catch(e){ toast("Kein gültiger Stand: Text vollständig kopieren"); return; }
+      if(!o || !o.items){ toast("Kein gültiger Stand: es fehlen die Positionen"); return; }
+      state = migrate(o); save("Stand übernommen"); document.querySelector(".dialog").remove(); go("home");
+    }})]);
+}
+
+/* ---------- Bearbeiten ---------- */
+function vEdit(){
+  app.appendChild(h("div",{class:"top"},[h("h1",{text:"Bearbeiten"}), h("button",{class:"btn", id:"btn-edit-back", text:"Fertig", onclick:function(){ go("mehr"); }})]));
+  app.appendChild(h("button",{class:"btn pri big", id:"btn-add", text:"+ Neue Position", onclick:function(){ editItem(null); }}));
+  FELDER.forEach(function(f){
+    var its = state.items.filter(function(i){ return i.f===f.id; });
+    var d = h("details",{class:"grp", style:"margin-top:10px"},[h("summary",{},[f.n, h("span",{class:"xs mu", text:String(its.length)})])]);
+    var l = h("div",{class:"list"});
+    its.forEach(function(it){
+      l.appendChild(h("div",{class:"it"},[
+        h("div",{},[h("div",{class:"nm", text:it.n}), h("div",{class:"meta", text: (it.t==="m" ? "Soll " + fmt(it.soll) + " " + it.e : it.t==="p" ? "Prüfpunkt" : "Aufgabe") + (it.s==="h" ? " · nur Herbst" : it.s==="f" ? " · nur Frühjahr" : "")})]),
+        h("button",{class:"tick", id:"ed-"+it.id, text:"Ändern", onclick:function(){ editItem(it); }})
+      ]));
+    });
+    d.appendChild(l); app.appendChild(d);
+  });
+}
+function editItem(it){
+  var neu = !it;
+  var w = it ? deep(it) : {id:"eigen-"+Date.now().toString(36), f:FELDER[0].id, t:"m", n:"", soll:1, e:"Stk.", ist:null, mhd:null, ok:null, last:null, notiz:""};
+  function inp(id, label, val, type){ var i = h("input",{id:id, type:type||"text", value: val==null ? "" : String(val)}); return [h("div",{class:"field"},[h("label",{for:id, text:label}), i]), i]; }
+  function sel(id, label, opts, val){ var s = h("select",{id:id}); opts.forEach(function(o){ s.appendChild(h("option",{value:o[0], text:o[1], selected: o[0]===val})); }); return [h("div",{class:"field"},[h("label",{for:id, text:label}), s]), s]; }
+  var fN = inp("e-n","Bezeichnung", w.n);
+  var fF = sel("e-f","Themenfeld", FELDER.map(function(f){ return [f.id,f.n]; }), w.f);
+  var fT = sel("e-t","Art", [["m","Menge zählen"],["p","Prüfen (passt/Problem)"],["u","Aufgabe/Übung"]], w.t);
+  var fSoll = inp("e-soll","Soll-Menge", w.soll, "number");
+  var fE = inp("e-e","Einheit", w.e);
+  var fMin = inp("e-min","Nachkaufen unter (leer = Soll)", w.min, "number");
+  var fS = sel("e-s","Wann prüfen", [["a","Jeder Check"],["h","Nur Herbst"],["f","Nur Frühjahr"]], w.s || "a");
+  var fI = sel("e-i","Wiederholen (Aufgaben)", [["0","einmalig"],["6","halbjährlich"],["12","jährlich"],["24","alle 2 Jahre"]], String(w.i||0));
+  var fO = inp("e-o","Lagerort", w.o);
+  var fH = h("textarea",{id:"e-h", text:w.h||"", style:"min-height:70px"});
+  var fX = h("input",{type:"checkbox", id:"e-x", checked: !!w.x});
+  var fP = h("input",{type:"checkbox", id:"e-pp", checked: !!w.pp});
+  var body = [fN[0], h("div",{class:"two"},[fF[0], fT[0]]), h("div",{class:"two"},[fSoll[0], fE[0]]), h("div",{class:"two"},[fMin[0], fS[0]]), h("div",{class:"two"},[fI[0], fO[0]]),
+    h("div",{class:"field"},[h("label",{for:"e-h", text:"Hinweis"}), fH]),
+    h("label",{class:"row sm", for:"e-x"},[fX, "MHD/Ablaufdatum erfassen"]),
+    h("label",{class:"row sm", for:"e-pp", style:"margin-top:6px"},[fP, "Menge skaliert mit Personenzahl"])];
+  var acts = [h("button",{class:"btn pri", id:"e-save", text:"Speichern", onclick:function(){
+    if(!fN[1].value.trim()){ toast("Bitte eine Bezeichnung eintragen"); return; }
+    w.n = fN[1].value.trim(); w.f = fF[1].value; w.t = fT[1].value;
+    w.soll = fSoll[1].value === "" ? null : parseFloat(fSoll[1].value); w.e = fE[1].value || "Stk.";
+    w.min = fMin[1].value === "" ? undefined : parseFloat(fMin[1].value);
+    w.s = fS[1].value === "a" ? undefined : fS[1].value; w.i = parseInt(fI[1].value,10);
+    w.o = fO[1].value || undefined; w.h = fH.value || undefined; w.x = fX.checked ? 1 : undefined; w.pp = fP.checked ? 1 : undefined;
+    if(w.t === "m" && (w.soll == null || isNaN(w.soll))){ toast("Bitte eine Soll-Menge eintragen"); return; }
+    if(neu) state.items.push(w); else { var k = state.items.indexOf(it); state.items[k] = w; }
+    save("Gespeichert"); document.querySelector(".dialog").remove(); render();
+  }})];
+  if(!neu) acts.unshift(h("button",{class:"btn", id:"e-del", style:"color:var(--bad)", text:"Löschen", onclick:function(){
+    state.items.splice(state.items.indexOf(it),1);
+    if(!state.entfernt) state.entfernt = {};
+    state.entfernt[it.id] = 1;
+    if(state.session){ var p = state.session.ids.indexOf(it.id); if(p>=0) state.session.ids.splice(p,1); }
+    save("Gelöscht"); document.querySelector(".dialog").remove(); render();
+  }}));
+  dialog(neu ? "Neue Position" : "Position ändern", body, acts);
+}
+
+/* ============================================================
+   Start
+   ============================================================ */
+function load(){
+  var local = null;
+  try{ local = JSON.parse(localStorage.getItem(LS) || "null"); }catch(e){}
+  var hash = location.hash || "";
+  var m = hash.match(/^#([zsr])=(.+)$/);
+  if(m){
+    var kind = m[1];
+    var p = kind === "s" ? Promise.resolve(JSON.parse(decodeURIComponent(escape(atob(m[2]))))) : decode(m[2]);
+    return p.then(function(o){
+      if(kind === "r"){ readOnly = true; state = migrate(o); return; }
+      if(local && local.t && o.t && local.t > o.t){ state = migrate(local); toast("Neuerer Stand auf diesem Gerät geladen"); return; }
+      state = migrate(o);
+    }).catch(function(){ state = migrate(local) ; toast("Link-Stand nicht lesbar, Gerätestand geladen"); });
+  }
+  state = local ? migrate(local) : frisch();
+  return Promise.resolve();
+}
+load().then(function(){
+  if(!state) state = frisch();
+  if(!readOnly) save();
+  render();
+});
+})();
+</script>
+</body>
+</html>
